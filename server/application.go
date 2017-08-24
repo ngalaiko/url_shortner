@@ -7,6 +7,7 @@ import (
 	"github.com/ngalayko/url_shortner/server/dao"
 	"github.com/ngalayko/url_shortner/server/dao/migrate"
 	"github.com/ngalayko/url_shortner/server/logger"
+	"github.com/ngalayko/url_shortner/server/web"
 	"go.uber.org/zap"
 )
 
@@ -49,8 +50,6 @@ func (app *Application) initServices() {
 	}
 }
 
-func (app *Application) Healthcheck() {
-	l := logger.FromContext(app.ctx)
-
-	l.Info("I'm ok!")
+func (app *Application) Serve() {
+	web.FromContext(app.ctx).Serve()
 }

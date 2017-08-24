@@ -7,5 +7,5 @@ import (
 func main() {
 	app := server.NewApplication()
 
-	app.Healthcheck()
+	app.Serve()
 }

@@ -19,7 +19,8 @@ const (
 type configCtxKey string
 
 type Config struct {
-	Db DbConfig `yaml:"Db"`
+	Db  DbConfig  `yaml:"Db"`
+	Web WebConfig `yaml:"Web"`
 }
 
 var (

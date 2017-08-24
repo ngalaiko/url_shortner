@@ -2,22 +2,40 @@
 
 
 [[projects]]
-  name = "github.com/jinzhu/gorm"
-  packages = [".","dialects/postgres"]
-  revision = "5174cc5c242a728b435ea2be8a2f7f998e15429b"
-  version = "v1.0"
+  branch = "master"
+  name = "github.com/jmoiron/sqlx"
+  packages = [".","reflectx"]
+  revision = "d9bd385d68c068f1fabb5057e3dedcbcbb039d0f"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/jinzhu/inflection"
+  name = "github.com/klauspost/compress"
+  packages = ["flate","gzip","zlib"]
+  revision = "6c8db69c4b49dd4df1fff66996cf556176d0b9bf"
+  version = "v1.2.1"
+
+[[projects]]
+  name = "github.com/klauspost/cpuid"
   packages = ["."]
-  revision = "1c35d901db3da928c72a72d8458480cc9ade058f"
+  revision = "ae7887de9fa5d2db4eaa8174a7eff2c1ac00f2da"
+  version = "v1.1"
+
+[[projects]]
+  name = "github.com/klauspost/crc32"
+  packages = ["."]
+  revision = "cb6bfca970f6908083f26f39a79009d608efd5cd"
+  version = "v1.1"
 
 [[projects]]
   branch = "master"
   name = "github.com/lib/pq"
-  packages = [".","hstore","oid"]
+  packages = [".","oid"]
   revision = "e42267488fe361b9dc034be7a6bffef5b195bceb"
+
+[[projects]]
+  name = "github.com/valyala/fasthttp"
+  packages = [".","fasthttputil"]
+  revision = "d42167fd04f636e20b005e9934159e95454233c7"
+  version = "v20160617"
 
 [[projects]]
   name = "go.uber.org/atomic"
@@ -46,6 +64,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f142a34cdb5b6174b82f40d41d6a9c2b6905fc7e0b05799c160214fffedf2726"
+  inputs-digest = "5646cc26e52ede45d55e82f55b85914f3dd7564511f36b327aff92d2fa8d7e66"
   solver-name = "gps-cdcl"
   solver-version = 1
