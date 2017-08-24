@@ -1,0 +1,2 @@
+Db:
+  Connect: "host=localhost user=url_short dbname=url_short sslmode=disable password=secret"
