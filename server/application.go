@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/ngalayko/url_shortner/server/config"
-	"github.com/ngalayko/url_shortner/server/db"
+	"github.com/ngalayko/url_shortner/server/dao"
+	"github.com/ngalayko/url_shortner/server/dao/migrate"
 	"github.com/ngalayko/url_shortner/server/logger"
+	"go.uber.org/zap"
 )
 
 type Application struct {
@@ -18,7 +20,8 @@ var (
 	services = []newServiceFunc{
 		logger.NewContext,
 		config.NewContext,
-		db.NewContext,
+		dao.NewContext,
+		migrate.NewContext,
 	}
 )
 
@@ -29,6 +32,13 @@ func NewApplication() *Application {
 	}
 
 	app.initServices()
+
+	l := logger.FromContext(app.ctx)
+	if err := migrate.FromContext(app.ctx).Apply(); err != nil {
+		l.Panic("error while migrations",
+			zap.Error(err),
+		)
+	}
 
 	return app
 }

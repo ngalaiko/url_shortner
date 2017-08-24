@@ -1,5 +1,8 @@
 package config
 
 type DbConfig struct {
-	Connect string `yaml:"Connect"`
+	Driver       string `yaml:"Driver"`
+	Connect      string `yaml:"Connect"`
+	MaxIdleConns int    `yaml:"MaxIdleConns"`
+	MaxOpenConns int    `yaml:"MaxOpenConns"`
 }

@@ -1,2 +1,5 @@
 Db:
+  Driver: "postgres"
   Connect: "host=localhost user=url_short dbname=url_short sslmode=disable password=secret"
+  MaxIdleConns: 5
+  MaxOpenConns: 10
