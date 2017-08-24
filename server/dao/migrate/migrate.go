@@ -82,7 +82,7 @@ func (m *Migrate) Apply() error {
 
 func (m *Migrate) applyInitMigrations() error {
 	for _, migration := range initMigrations() {
-		if err := m.applyMigration(migration); err != nil {
+		if _, err := m.Db.Exec(migration.RawSql); err != nil {
 			return err
 		}
 	}

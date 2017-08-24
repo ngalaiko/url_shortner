@@ -2,7 +2,10 @@
 all: deps run
 
 build:
-	go build -o ./bin/url_shortner ./cmd/url_shortner.go
+	go build -o ./bin/url_shortner ./cmd/main.go
+
+build-alpine: deps
+	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/url_shortner ./cmd/main.go
 
 run: build
 	./bin/url_shortner --config=./config.yaml
@@ -15,3 +18,9 @@ fmt:
 
 deps:
 	dep ensure
+
+docker-build:
+	docker build . -t url_shortner
+
+docker-run: docker-build
+	docker run -p 8080:8080 -v $(shell pwd)/data:/tmp/data url_shortner

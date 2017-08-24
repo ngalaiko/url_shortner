@@ -6,7 +6,6 @@ type migration struct {
 	ID        uint      `db:"id"`
 	Name      string    `db:"name"`
 	RawSql    string    `db:"-"`
-	FlushSql  string    `db:"-"`
 	AppliedAt time.Time `db:"applied_at"`
 }
 
@@ -26,5 +25,34 @@ func initMigrations() []*migration {
 }
 
 func migrations() []*migration {
-	return []*migration{}
+	return []*migration{
+		{
+			Name: "create users table",
+			RawSql: `
+			CREATE TABLE users (
+				id         BIGSERIAL     NOT NULL PRIMARY KEY,
+				first_name VARCHAR(255)  NOT NULL,
+				last_name  VARCHAR(255)  NOT NULL,
+				created_at TIMESTAMP     NOT NULL DEFAULT NOW(),
+				deleted_at TIMESTAMP
+			)
+			`,
+		},
+		{
+			Name: "create links table",
+			RawSql: `
+			CREATE TABLE links (
+				id         BIGSERIAL NOT NULL PRIMARY KEY,
+				user_id    BIGINT    NOT NULL REFERENCES users(id),
+				url        TEXT      NOT NULL,
+				short_url  TEXT      NOT NULL,
+				clicks     BIGINT    NOT NULL DEFAULT 0,
+				views      BIGINT    NOT NULL DEFAULT 0,
+				expired_at TIMESTAMP NOT NULL,
+				created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+				deleted_at TIMESTAMP
+			)
+			`,
+		},
+	}
 }
