@@ -5,7 +5,7 @@ import "time"
 type migration struct {
 	ID        uint      `db:"id"`
 	Name      string    `db:"name"`
-	RawSql    string    `db:"-"`
+	RawSQL    string    `db:"-"`
 	AppliedAt time.Time `db:"applied_at"`
 }
 
@@ -13,7 +13,7 @@ func initMigrations() []*migration {
 	return []*migration{
 		{
 			Name: "create migrations table",
-			RawSql: `
+			RawSQL: `
 			CREATE TABLE IF NOT EXISTS migrations (
 				id         SERIAL    NOT NULL,
 				name       VARCHAR   NOT NULL,
@@ -28,7 +28,7 @@ func migrations() []*migration {
 	return []*migration{
 		{
 			Name: "create users table",
-			RawSql: `
+			RawSQL: `
 			CREATE TABLE users (
 				id         BIGSERIAL     NOT NULL PRIMARY KEY,
 				first_name VARCHAR(255)  NOT NULL,
@@ -40,7 +40,7 @@ func migrations() []*migration {
 		},
 		{
 			Name: "create links table",
-			RawSql: `
+			RawSQL: `
 			CREATE TABLE links (
 				id         BIGSERIAL NOT NULL PRIMARY KEY,
 				user_id    BIGINT    NOT NULL REFERENCES users(id),

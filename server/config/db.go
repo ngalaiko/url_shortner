@@ -1,5 +1,6 @@
 package config
 
+// DbConfig is database config
 type DbConfig struct {
 	Driver       string `yaml:"Driver"`
 	Connect      string `yaml:"Connect"`

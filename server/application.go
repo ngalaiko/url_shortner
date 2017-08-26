@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Application is an application main object
 type Application struct {
 	ctx context.Context
 }
@@ -26,6 +27,7 @@ var (
 	}
 )
 
+// NewApplication creates new application
 func NewApplication() *Application {
 
 	app := &Application{
@@ -50,6 +52,7 @@ func (app *Application) initServices() {
 	}
 }
 
+// Serve serve web
 func (app *Application) Serve() {
 	web.FromContext(app.ctx).Serve()
 }

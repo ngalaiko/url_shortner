@@ -10,6 +10,7 @@ const (
 	maxLastNameLength  = 255
 )
 
+// User is a user db object
 type User struct {
 	ID        uint64     `json:"id" db:"id"`
 	FirstName string     `json:"first_name" db:"first_name"`
@@ -18,12 +19,13 @@ type User struct {
 	DeletedAt *time.Time `json:"deleted_at" db:"deleted_at"`
 }
 
+// Validate validates user structure fields
 func (u *User) Validate() error {
 	switch {
 	case len(u.FirstName) > maxFirstNameLength:
-		return fmt.Errorf("first name %s is longer than %s", u.FirstName, maxFirstNameLength)
+		return fmt.Errorf("first name %s is longer than %d", u.FirstName, maxFirstNameLength)
 	case len(u.LastName) > maxLastNameLength:
-		return fmt.Errorf("last name %s is longer than %s", u.FirstName, maxFirstNameLength)
+		return fmt.Errorf("last name %s is longer than %d", u.FirstName, maxFirstNameLength)
 	default:
 		return nil
 	}

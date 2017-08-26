@@ -3,10 +3,10 @@ package migrate
 import (
 	"context"
 
-	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
+
 	"github.com/ngalayko/url_shortner/server/dao"
 	"github.com/ngalayko/url_shortner/server/logger"
-	"go.uber.org/zap"
 )
 
 const (
@@ -15,12 +15,14 @@ const (
 
 type migrationsCtxKey string
 
+// Migrate is a service to apply db migrations
 type Migrate struct {
 	Db *dao.Db
 
 	logger *logger.Logger
 }
 
+// NewContext stores Migrate in context
 func NewContext(ctx context.Context, migrations interface{}) context.Context {
 	if ctx == nil {
 		ctx = context.Background()
@@ -33,6 +35,7 @@ func NewContext(ctx context.Context, migrations interface{}) context.Context {
 	return context.WithValue(ctx, ctxKey, migrations)
 }
 
+// FromContext returns Migrate from context
 func FromContext(ctx context.Context) *Migrate {
 	if migrations, ok := ctx.Value(ctxKey).(*Migrate); ok {
 		return migrations
@@ -48,6 +51,7 @@ func newMigrate(ctx context.Context) *Migrate {
 	}
 }
 
+// Apply applies all migrations that were not applied
 func (m *Migrate) Apply() error {
 	if err := m.applyInitMigrations(); err != nil {
 		return err
@@ -82,7 +86,7 @@ func (m *Migrate) Apply() error {
 
 func (m *Migrate) applyInitMigrations() error {
 	for _, migration := range initMigrations() {
-		if _, err := m.Db.Exec(migration.RawSql); err != nil {
+		if _, err := m.Db.Exec(migration.RawSQL); err != nil {
 			return err
 		}
 	}
@@ -109,13 +113,13 @@ func (m *Migrate) applied() (map[string]*migration, error) {
 }
 
 func (m *Migrate) applyMigration(migration *migration) error {
-	return m.Db.Mutate(func(tx *sqlx.Tx) error {
+	return m.Db.Mutate(func(tx *dao.Tx) error {
 
 		m.logger.Info("applying migration",
 			zap.String("name", migration.Name),
 		)
 
-		if _, err := tx.Exec(migration.RawSql); err != nil {
+		if _, err := tx.Exec(migration.RawSQL); err != nil {
 			return err
 		}
 

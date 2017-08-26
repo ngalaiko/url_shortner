@@ -18,6 +18,7 @@ const (
 
 type configCtxKey string
 
+// Config is a application config struct
 type Config struct {
 	Db  DbConfig  `yaml:"Db"`
 	Web WebConfig `yaml:"Web"`
@@ -27,6 +28,7 @@ var (
 	configPath = flag.String("config", "", "path to app Config")
 )
 
+// NewContext stores config in context
 func NewContext(ctx context.Context, config interface{}) context.Context {
 	if ctx == nil {
 		ctx = context.Background()
@@ -39,6 +41,7 @@ func NewContext(ctx context.Context, config interface{}) context.Context {
 	return context.WithValue(ctx, ctxKey, config)
 }
 
+// FromContext returns config from context
 func FromContext(ctx context.Context) *Config {
 	if config, ok := ctx.Value(ctxKey).(*Config); ok {
 		return config

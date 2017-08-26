@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
 	"go.uber.org/zap"
+
+	// mandatory to init pq
+	_ "github.com/lib/pq"
 
 	"github.com/ngalayko/url_shortner/server/config"
 	"github.com/ngalayko/url_shortner/server/logger"
@@ -19,11 +21,13 @@ const (
 
 type dbCtxKey string
 
+// Db is a database service
 type Db struct {
 	*sqlx.DB
 	logger *logger.Logger
 }
 
+// NewContext stores Db in context
 func NewContext(ctx context.Context, db interface{}) context.Context {
 	if ctx == nil {
 		ctx = context.Background()
@@ -36,6 +40,7 @@ func NewContext(ctx context.Context, db interface{}) context.Context {
 	return context.WithValue(ctx, ctxKey, db)
 }
 
+// FromContext return Db from context
 func FromContext(ctx context.Context) *Db {
 	if db, ok := ctx.Value(ctxKey).(*Db); ok {
 		return db
@@ -50,7 +55,7 @@ func newDb(ctx context.Context) *Db {
 
 	db := newDbHelper(cfg, l)
 
-	if err := db.Healthckeck(ctx); err != nil {
+	if err := db.Healthcheck(ctx); err != nil {
 		l.Error("error connection db",
 			zap.Error(err),
 		)
@@ -86,24 +91,28 @@ func newDbHelper(cfg *config.Config, l *logger.Logger) *Db {
 	}
 }
 
-func (db *Db) Healthckeck(ctx context.Context) error {
+// Healthcheck is a db healthcheck
+func (db *Db) Healthcheck(ctx context.Context) error {
 	_, err := db.Exec("SELECT 1")
 	return err
 }
 
-func (db *Db) Mutate(callback func(tx *sqlx.Tx) error) error {
-	tx, err := db.Beginx()
-	if err != nil {
-		return err
+// Mutate opens new tx, applies callback func and close tx
+func (db *Db) Mutate(callback func(tx *Tx) error) error {
+	tx := &Tx{
+		db:     db.DB,
+		logger: db.logger,
 	}
 
-	if err := callback(tx); err != nil {
+	err := callback(tx)
+	switch err {
+	case nil:
+		return tx.Commit()
+	default:
 		if err := tx.Rollback(); err != nil {
 			return fmt.Errorf("error while rollback transaction: %s", err)
 		}
 
 		return err
 	}
-
-	return tx.Commit()
 }

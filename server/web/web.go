@@ -16,6 +16,7 @@ const (
 
 type webCtxKey string
 
+// Web is a web service
 type Web struct {
 	handler fasthttp.RequestHandler
 
@@ -23,6 +24,7 @@ type Web struct {
 	logger *logger.Logger
 }
 
+// NewContext stores web in context
 func NewContext(ctx context.Context, web interface{}) context.Context {
 	if ctx == nil {
 		ctx = context.Background()
@@ -35,6 +37,7 @@ func NewContext(ctx context.Context, web interface{}) context.Context {
 	return context.WithValue(ctx, ctxKey, web)
 }
 
+// FromContext return web from context
 func FromContext(ctx context.Context) *Web {
 	if web, ok := ctx.Value(ctxKey).(*Web); ok {
 		return web
@@ -54,6 +57,7 @@ func newWeb(ctx context.Context) *Web {
 	return w
 }
 
+// Serve serve web with config credentials
 func (w *Web) Serve() {
 	defer func() {
 		recover()
@@ -86,23 +90,5 @@ func (w *Web) initHandler() {
 		default:
 			ctx.NotFound()
 		}
-	}
-}
-
-func (w *Web) getHandlers(ctx *fasthttp.RequestCtx) {
-
-	switch string(ctx.RequestURI()) {
-	case "/health_check":
-		ctx.WriteString("ok")
-	default:
-		ctx.NotFound()
-	}
-}
-
-func (w *Web) postHandlers(ctx *fasthttp.RequestCtx) {
-
-	switch string(ctx.RequestURI()) {
-	default:
-		ctx.NotFound()
 	}
 }

@@ -13,10 +13,12 @@ const (
 
 type loggerCtxKey string
 
+// Logger is a logger service
 type Logger struct {
 	*zap.Logger
 }
 
+// NewContext stores logger in context
 func NewContext(ctx context.Context, logger interface{}) context.Context {
 	if ctx == nil {
 		ctx = context.Background()
@@ -29,6 +31,7 @@ func NewContext(ctx context.Context, logger interface{}) context.Context {
 	return context.WithValue(ctx, ctxKey, logger)
 }
 
+// FromContext returns logger form context
 func FromContext(ctx context.Context) *Logger {
 	if logger, ok := ctx.Value(ctxKey).(*Logger); ok {
 		return logger
@@ -40,7 +43,7 @@ func FromContext(ctx context.Context) *Logger {
 func newLogger() *Logger {
 	logger, err := zap.NewProduction()
 	if err != nil {
-		log.Panic("error while init logger: %s ", err)
+		log.Panicf("error while init logger: %s ", err)
 	}
 
 	logger.Info("logger created")

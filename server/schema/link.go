@@ -2,6 +2,7 @@ package schema
 
 import "time"
 
+// Link is a link db object
 type Link struct {
 	ID        uint64     `json:"id" db:"id"`
 	UserID    uint64     `json:"user_id" db:"user_id"`
@@ -9,7 +10,7 @@ type Link struct {
 	ShortURL  string     `json:"short_url" db:"short_url"`
 	Clicks    uint64     `json:"clicks" db:"clicks"`
 	Views     uint64     `json:"views" db:"views"`
-	ExpiedAt  time.Time  `json:"expied_at" db:"expired_at"`
+	ExpiredAt time.Time  `json:"expired_at" db:"expired_at"`
 	CreatedAt time.Time  `json:"created_at" db:"created_at"`
 	DeletedAt *time.Time `json:"deleted_at" db:"deleted_at"`
 }
