@@ -1,0 +1,19 @@
+version: '3'
+services:
+  server:
+    build: ./server
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+  postgres:
+    image: "postgres"
+    ports:
+      - "5433:5433"
+    environment:
+      POSTGRES_DB: "url_short"
+      POSTGRES_USER: "url_short"
+      POSTGRES_PASSWORD: "secret"
+      POSTGRES_DATA: "/data/postgres"
+    volumes:
+      - "/data/postgres:/data/postgres"

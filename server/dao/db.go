@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -47,6 +48,26 @@ func newDb(ctx context.Context) *Db {
 	cfg := config.FromContext(ctx)
 	l := logger.FromContext(ctx)
 
+	db := newDbHelper(cfg, l)
+
+	if err := db.Healthckeck(ctx); err != nil {
+		l.Error("error connection db",
+			zap.Error(err),
+		)
+		time.Sleep(time.Second)
+		return newDb(ctx)
+	}
+
+	l.Info("db connection created",
+		zap.String("driver", cfg.Db.Driver),
+		zap.String("config", cfg.Db.Connect),
+	)
+
+	return db
+}
+
+func newDbHelper(cfg *config.Config, l *logger.Logger) *Db {
+
 	db, err := sqlx.Open(cfg.Db.Driver, cfg.Db.Connect)
 	if err != nil {
 		l.Panic("error while open db connection",
@@ -63,6 +84,11 @@ func newDb(ctx context.Context) *Db {
 		DB:     db,
 		logger: l,
 	}
+}
+
+func (db *Db) Healthckeck(ctx context.Context) error {
+	_, err := db.Exec("SELECT 1")
+	return err
 }
 
 func (db *Db) Mutate(callback func(tx *sqlx.Tx) error) error {

@@ -11,4 +11,4 @@ COPY --from=builder /go/src/github.com/ngalayko/url_shortner/server/bin/url_shor
 RUN date > /created_date
 EXPOSE 80
 
-CMD ["./url_shortner", "--config=config.yaml"]
+ENTRYPOINT ["./url_shortner", "--config=config.yaml"]

@@ -1,8 +1,8 @@
 Db:
   Driver: "postgres"
-  Connect: "host=localhost user=url_short dbname=url_short sslmode=disable password=secret"
+  Connect: "host=postgres user=url_short dbname=url_short sslmode=disable password=secret"
   MaxIdleConns: 5
   MaxOpenConns: 10
 
 Web:
-  Address: "localhost:8080"
+  Address: "0.0.0.0:8080"
