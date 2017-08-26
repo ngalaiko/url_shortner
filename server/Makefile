@@ -1,13 +1,16 @@
 
-all: deps run
+all: deps generate build
 
-build:
+generate:
+	go generate ./generate/...
+
+build: generate
 	go build -o ./bin/url_shortner ./cmd/main.go
 
-build-alpine: deps
+build-alpine: deps generate
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/url_shortner ./cmd/main.go
 
-run: build
+run:
 	./bin/url_shortner --config=./config.yaml
 
 tests:
