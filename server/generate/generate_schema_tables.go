@@ -31,24 +31,45 @@ type {{ $.Name }}Table struct {
 	logger *logger.Logger
 }
 
-func ({{ alias $.Name }} *{{ $.Name }}Table) Insert({{ alias $.Name }}{{ alias $.Name }} []*schema.{{ $.Name }}) error {
+func ({{ alias $.Name }}t *{{ $.Name }}Table) Insert{{ $.Name }}({{ alias $.Name }} *schema.{{ $.Name }}) error {
 	return {{ alias $.Name }}.db.Mutate(func(tx *dao.Tx) error {
 
-		b := bytes.Buffer{}
-
-		b.WriteString("INSERT INTO {{ $.TableName }}" +
+		insertSQL := "INSERT INTO {{ $.TableName }}" +
 			"({{ head .DbFields}}{{ range tail .DbFields }}, {{ . }}{{ end }})" +
-			"VALUES")
+			"VALUES" +
+			fmt.Sprintf("(%v{{ range tail .Fields }}, %v{{ end }})",
+				{{ alias $.Name}}.{{ head .Fields }}{{ range tail .Fields }},
+				{{ alias $.Name }}.{{ . }}{{ end }})
 
-		for _, {{ alias $.Name }} := range {{ alias $.Name }}{{ alias $.Name }} {
-			b.WriteString(
-				fmt.Sprintf("(%v{{ range tail .Fields }}, %v{{ end }})",
-					{{ alias $.Name}}.{{ head .Fields }}{{ range tail .Fields }},
-					{{ alias $.Name }}.{{ . }}{{ end }}))
+		_, err := tx.Exec(insertSQL)
+		if err != nil {
+			return err
 		}
 
-		_, err := tx.Exec(b.String())
-		return err
+		{{ alias $.Name }}t.logger.Info("{{ $.Name }} created",
+			zap.Reflect("$.Name", {{ alias $.Name }}),
+		)
+		return nil
+	})
+}
+
+func ({{ alias $.Name }}t *{{ $.Name }}Table) Update{{ $.Name }}({{ alias $.Name }} *schema.{{ $.Name }}) error {
+	return {{ alias $.Name }}.db.Mutate(func(tx *dao.Tx) error {
+
+		updateSQL := "UPDATE {{ $.TableName }}" +
+			"SET" +
+			{{ range $index, $element := tail $.Fields }}fmt.Sprintf("{{ index $.DbFields $index }} = %v,", {{ alias $.Name }}.{{ $element }}) +
+			{{ end }}fmt.Sprintf("{{ last $.DbFields }} = %v", {{ alias $.Name }}.{{ last $.Fields }})
+
+		_, err := tx.Exec(updateSQL)
+		if err != nil {
+			return err
+		}
+
+		{{ alias $.Name }}t.logger.Info("{{ $.Name }} updated",
+			zap.Reflect("$.Name", {{ alias $.Name }}),
+		)
+		return nil
 	})
 }
 `
@@ -127,6 +148,9 @@ func getTemplateFuncs() template.FuncMap {
 		},
 		"tail": func(ss []string) []string {
 			return ss[1:]
+		},
+		"last": func(ss []string) string {
+			return ss[len(ss)-1]
 		},
 	}
 }

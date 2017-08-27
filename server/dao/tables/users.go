@@ -16,25 +16,48 @@ type UserTable struct {
 	logger *logger.Logger
 }
 
-func (u *UserTable) Insert(uu []*schema.User) error {
+func (ut *UserTable) InsertUser(u *schema.User) error {
 	return u.db.Mutate(func(tx *dao.Tx) error {
 
-		b := bytes.Buffer{}
-
-		b.WriteString("INSERT INTO users" +
+		insertSQL := "INSERT INTO users" +
 			"(first_name, last_name, created_at, deleted_at)" +
-			"VALUES")
+			"VALUES" +
+			fmt.Sprintf("(%v, %v, %v, %v)",
+				u.FirstName,
+				u.LastName,
+				u.CreatedAt,
+				u.DeletedAt)
 
-		for _, u := range uu {
-			b.WriteString(
-				fmt.Sprintf("(%v, %v, %v, %v)",
-					u.FirstName,
-					u.LastName,
-					u.CreatedAt,
-					u.DeletedAt))
+		_, err := tx.Exec(insertSQL)
+		if err != nil {
+			return err
 		}
 
-		_, err := tx.Exec(b.String())
-		return err
+		ut.logger.Info("User created",
+			zap.Reflect("$.Name", u),
+		)
+		return nil
+	})
+}
+
+func (ut *UserTable) UpdateUser(u *schema.User) error {
+	return u.db.Mutate(func(tx *dao.Tx) error {
+
+		updateSQL := "UPDATE users" +
+			"SET" +
+			fmt.Sprintf("first_name = %v,", u.LastName) +
+			fmt.Sprintf("last_name = %v,", u.CreatedAt) +
+			fmt.Sprintf("created_at = %v,", u.DeletedAt) +
+			fmt.Sprintf("deleted_at = %v", u.DeletedAt)
+
+		_, err := tx.Exec(updateSQL)
+		if err != nil {
+			return err
+		}
+
+		ut.logger.Info("User updated",
+			zap.Reflect("$.Name", u),
+		)
+		return nil
 	})
 }

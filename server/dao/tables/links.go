@@ -16,29 +16,56 @@ type LinkTable struct {
 	logger *logger.Logger
 }
 
-func (l *LinkTable) Insert(ll []*schema.Link) error {
+func (lt *LinkTable) InsertLink(l *schema.Link) error {
 	return l.db.Mutate(func(tx *dao.Tx) error {
 
-		b := bytes.Buffer{}
-
-		b.WriteString("INSERT INTO links" +
+		insertSQL := "INSERT INTO links" +
 			"(user_id, url, short_url, clicks, views, expired_at, created_at, deleted_at)" +
-			"VALUES")
+			"VALUES" +
+			fmt.Sprintf("(%v, %v, %v, %v, %v, %v, %v, %v)",
+				l.UserID,
+				l.URL,
+				l.ShortURL,
+				l.Clicks,
+				l.Views,
+				l.ExpiredAt,
+				l.CreatedAt,
+				l.DeletedAt)
 
-		for _, l := range ll {
-			b.WriteString(
-				fmt.Sprintf("(%v, %v, %v, %v, %v, %v, %v, %v)",
-					l.UserID,
-					l.URL,
-					l.ShortURL,
-					l.Clicks,
-					l.Views,
-					l.ExpiredAt,
-					l.CreatedAt,
-					l.DeletedAt))
+		_, err := tx.Exec(insertSQL)
+		if err != nil {
+			return err
 		}
 
-		_, err := tx.Exec(b.String())
-		return err
+		lt.logger.Info("Link created",
+			zap.Reflect("$.Name", l),
+		)
+		return nil
+	})
+}
+
+func (lt *LinkTable) UpdateLink(l *schema.Link) error {
+	return l.db.Mutate(func(tx *dao.Tx) error {
+
+		updateSQL := "UPDATE links" +
+			"SET" +
+			fmt.Sprintf("user_id = %v,", l.URL) +
+			fmt.Sprintf("url = %v,", l.ShortURL) +
+			fmt.Sprintf("short_url = %v,", l.Clicks) +
+			fmt.Sprintf("clicks = %v,", l.Views) +
+			fmt.Sprintf("views = %v,", l.ExpiredAt) +
+			fmt.Sprintf("expired_at = %v,", l.CreatedAt) +
+			fmt.Sprintf("created_at = %v,", l.DeletedAt) +
+			fmt.Sprintf("deleted_at = %v", l.DeletedAt)
+
+		_, err := tx.Exec(updateSQL)
+		if err != nil {
+			return err
+		}
+
+		lt.logger.Info("Link updated",
+			zap.Reflect("$.Name", l),
+		)
+		return nil
 	})
 }
