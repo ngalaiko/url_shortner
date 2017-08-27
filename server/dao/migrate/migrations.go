@@ -6,6 +6,7 @@ type migration struct {
 	ID        uint      `db:"id"`
 	Name      string    `db:"name"`
 	RawSQL    string    `db:"-"`
+	FlushSQL  string    `db:"-"`
 	AppliedAt time.Time `db:"applied_at"`
 }
 
@@ -20,6 +21,7 @@ func initMigrations() []*migration {
 				applied_at TIMESTAMP NOT NULL DEFAULT NOW()
 			)
 			`,
+			FlushSQL: "DELETE FROM migrations",
 		},
 	}
 }
@@ -37,6 +39,7 @@ func migrations() []*migration {
 				deleted_at TIMESTAMP
 			)
 			`,
+			FlushSQL: `DROP TABLE IF EXISTS users`,
 		},
 		{
 			Name: "create links table",
@@ -53,6 +56,7 @@ func migrations() []*migration {
 				deleted_at TIMESTAMP
 			)
 			`,
+			FlushSQL: `DROP TABLE IF EXISTS links`,
 		},
 	}
 }

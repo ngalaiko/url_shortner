@@ -45,9 +45,9 @@ func (t *Tables) SelectUserByIds(ids []uint64) ([]*schema.User, error) {
 	}
 
 	uuMissing := make([]*schema.User, 0, len(missingIds))
-	if err := t.db.Select(uu,
-		"SELECT *"+
-			"FROM users"+
+	if err := t.db.Select(&uuMissing,
+		"SELECT * "+
+			"FROM users "+
 			"WHERE id IN ("+helpers.Uint64sToString(missingIds)+")",
 	); err != nil {
 		return nil, err
@@ -65,19 +65,17 @@ func (t *Tables) SelectUserByIds(ids []uint64) ([]*schema.User, error) {
 func (t *Tables) InsertUser(u *schema.User) error {
 	return t.db.Mutate(func(tx *dao.Tx) error {
 
-		insertSQL := "INSERT INTO users" +
-			"(first_name, last_name, created_at, deleted_at)" +
-			"VALUES" +
-			fmt.Sprintf("(%v, %v, %v, %v)",
-				u.FirstName,
-				u.LastName,
-				u.CreatedAt,
-				u.DeletedAt)
+		insertSQL := "INSERT INTO users " +
+			"(first_name, last_name, created_at, deleted_at) " +
+			"VALUES " +
+			"($1, $2, $3, $4) " +
+			"RETURNING id"
 
-		_, err := tx.Exec(insertSQL)
-		if err != nil {
+		var id uint64
+		if err := tx.Get(&id, insertSQL, u.FirstName, u.LastName, u.CreatedAt, u.DeletedAt); err != nil {
 			return err
 		}
+		u.ID = id
 
 		t.logger.Info("User created",
 			zap.Reflect("$.Name", u),
@@ -91,14 +89,15 @@ func (t *Tables) InsertUser(u *schema.User) error {
 func (t *Tables) UpdateUser(u *schema.User) error {
 	return t.db.Mutate(func(tx *dao.Tx) error {
 
-		updateSQL := "UPDATE users" +
-			"SET" +
-			fmt.Sprintf("first_name = %v,", u.FirstName) +
-			fmt.Sprintf("last_name = %v,", u.LastName) +
-			fmt.Sprintf("created_at = %v,", u.CreatedAt) +
-			fmt.Sprintf("deleted_at = %v", u.DeletedAt)
+		updateSQL := "UPDATE users " +
+			"SET " +
+			"first_name = $1, " +
+			"last_name = $2, " +
+			"created_at = $3, " +
+			"deleted_at = $4 " +
+			fmt.Sprintf("WHERE id = %d", u.ID)
 
-		_, err := tx.Exec(updateSQL)
+		_, err := tx.Exec(updateSQL, u.FirstName, u.LastName, u.CreatedAt, u.DeletedAt)
 		if err != nil {
 			return err
 		}

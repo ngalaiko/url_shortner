@@ -61,9 +61,9 @@ func (t *Tables) Select{{ $.Name }}ByIds(ids []uint64) ([]*schema.{{ $.Name }}, 
 	}
 
 	{{ alias $.Name }}{{ alias $.Name }}Missing := make([]*schema.{{ $.Name }}, 0, len(missingIds))
-	if err := t.db.Select({{ alias $.Name }}{{ alias $.Name }},
-		"SELECT *"+
-			"FROM {{ $.TableName }}"+
+	if err := t.db.Select(&{{ alias $.Name }}{{ alias $.Name }}Missing,
+		"SELECT * "+
+			"FROM {{ $.TableName }} "+
 			"WHERE id IN ("+helpers.Uint64sToString(missingIds)+")",
 	); err != nil {
 		return nil, err
@@ -81,17 +81,17 @@ func (t *Tables) Select{{ $.Name }}ByIds(ids []uint64) ([]*schema.{{ $.Name }}, 
 func (t *Tables) Insert{{ $.Name }}({{ alias $.Name }} *schema.{{ $.Name }}) error {
 	return t.db.Mutate(func(tx *dao.Tx) error {
 
-		insertSQL := "INSERT INTO {{ $.TableName }}" +
-			"({{ head .DbFields}}{{ range tail .DbFields }}, {{ . }}{{ end }})" +
-			"VALUES" +
-			fmt.Sprintf("(%v{{ range tail .Fields }}, %v{{ end }})",
-				{{ alias $.Name}}.{{ head .Fields }}{{ range tail .Fields }},
-				{{ alias $.Name }}.{{ . }}{{ end }})
+		insertSQL := "INSERT INTO {{ $.TableName }} " +
+			"({{ head .DbFields}}{{ range tail .DbFields }}, {{ . }}{{ end }}) " +
+			"VALUES " +
+			"($1{{ range $index, $element := tail .Fields }}, ${{ sum $index 2 }}{{ end }}) " +
+			"RETURNING id"
 
-		_, err := tx.Exec(insertSQL)
-		if err != nil {
+		var id uint64
+		if err := tx.Get(&id, insertSQL, {{ alias $.Name }}.{{ head .Fields }}{{ range tail .Fields }}, {{ alias $.Name }}.{{ . }}{{ end }}); err != nil {
 			return err
 		}
+		{{ alias $.Name }}.ID = id
 
 		t.logger.Info("{{ $.Name }} created",
 			zap.Reflect("$.Name", {{ alias $.Name }}),
@@ -105,12 +105,13 @@ func (t *Tables) Insert{{ $.Name }}({{ alias $.Name }} *schema.{{ $.Name }}) err
 func (t *Tables) Update{{ $.Name }}({{ alias $.Name }} *schema.{{ $.Name }}) error {
 	return t.db.Mutate(func(tx *dao.Tx) error {
 
-		updateSQL := "UPDATE {{ $.TableName }}" +
-			"SET" +
-			{{ range $index, $element := body $.Fields }}fmt.Sprintf("{{ index $.DbFields $index }} = %v,", {{ alias $.Name }}.{{ $element }}) +
-			{{ end }}fmt.Sprintf("{{ last $.DbFields }} = %v", {{ alias $.Name }}.{{ last $.Fields }})
+		updateSQL := "UPDATE {{ $.TableName }} " +
+			"SET " +
+			{{ range $index, $element := body $.DbFields }}"{{ $element }} = ${{ sum $index 1 }}, " +
+			{{ end }}"{{ last .DbFields }} = ${{ len .Fields }} " +
+			fmt.Sprintf("WHERE id = %d", {{ alias $.Name }}.ID)
 
-		_, err := tx.Exec(updateSQL)
+		_, err := tx.Exec(updateSQL, {{ alias $.Name }}.{{ head .Fields }}{{ range tail .Fields }}, {{ alias $.Name }}.{{ . }}{{ end }})
 		if err != nil {
 			return err
 		}
@@ -216,6 +217,12 @@ func getTemplateFuncs() template.FuncMap {
 		},
 		"last": func(ss []string) string {
 			return ss[len(ss)-1]
+		},
+		"sum": func(a, b int) int {
+			return a + b
+		},
+		"len": func(str []string) int {
+			return len(str)
 		},
 	}
 }

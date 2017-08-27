@@ -44,15 +44,36 @@ func (t *Tx) begin() (*Tx, error) {
 	return t, nil
 }
 
-// Exec executes sql
-func (t *Tx) Exec(query string, args ...interface{}) (sql.Result, error) {
+// Get executes named sql
+func (t *Tx) Get(dest interface{}, query string, args ...interface{}) error {
+	t, err := t.begin()
+	if err != nil {
+		return err
+	}
+
 	t.logger.Debug("exec sql query",
 		zap.String("tx id", t.id),
 		zap.String("query", query),
 		zap.Reflect("args", args),
 	)
 
-	return t.tx.Exec(query, args)
+	return t.tx.Get(dest, query, args...)
+}
+
+// Exec executes sql
+func (t *Tx) Exec(query string, args ...interface{}) (sql.Result, error) {
+	t, err := t.begin()
+	if err != nil {
+		return nil, err
+	}
+
+	t.logger.Debug("exec sql query",
+		zap.String("tx id", t.id),
+		zap.String("query", query),
+		zap.Reflect("args", args),
+	)
+
+	return t.tx.Exec(query, args...)
 }
 
 // Commit commits tx

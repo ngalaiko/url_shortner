@@ -70,7 +70,7 @@ func (m *Migrate) Apply() error {
 			continue
 		}
 
-		if err := m.applyMigration(migration); err != nil {
+		if err = m.applyMigration(migration); err != nil {
 			return err
 		}
 
@@ -80,6 +80,26 @@ func (m *Migrate) Apply() error {
 	m.logger.Info("Appled migrations",
 		zap.Int("count", count),
 	)
+
+	return nil
+}
+
+func (m *Migrate) Flush() error {
+	migrations := append(initMigrations(), migrations()...)
+	for i := len(migrations) - 1; i >= 0; i-- {
+		m.logger.Info("Flushing migration",
+			zap.String("name", migrations[i].Name),
+			zap.String("query", migrations[i].FlushSQL),
+		)
+
+		if len(migrations[i].FlushSQL) == 0 {
+			continue
+		}
+
+		if _, err := m.Db.Exec(migrations[i].FlushSQL); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -117,6 +137,7 @@ func (m *Migrate) applyMigration(migration *migration) error {
 
 		m.logger.Info("applying migration",
 			zap.String("name", migration.Name),
+			zap.String("query", migration.RawSQL),
 		)
 
 		if _, err := tx.Exec(migration.RawSQL); err != nil {

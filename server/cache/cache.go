@@ -51,16 +51,6 @@ func newCache(ctx context.Context) *Cache {
 	}
 }
 
-// LoadOrStore stores value in cache if not present
-func (c *Cache) LoadOrStore(key string, value interface{}) interface{} {
-
-	if _, ok := c.Load(key); !ok {
-		c.Store(key, value)
-	}
-
-	return value
-}
-
 // Store stores value in cache
 func (c *Cache) Store(key string, value interface{}) {
 	c.logger.Info("store value in cache",
