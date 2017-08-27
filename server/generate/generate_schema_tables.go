@@ -56,6 +56,10 @@ func (t *Tables) Select{{ $.Name }}ByIds(ids []uint64) ([]*schema.{{ $.Name }}, 
 		{{ alias $.Name }}{{ alias $.Name }} = append({{ alias $.Name }}{{ alias $.Name }}, value.(*schema.{{ $.Name }}))
 	}
 
+	if len(missingIds) == 0 {
+		return {{ alias $.Name }}{{ alias $.Name }}, nil
+	}
+
 	{{ alias $.Name }}{{ alias $.Name }}Missing := make([]*schema.{{ $.Name }}, 0, len(missingIds))
 	if err := t.db.Select({{ alias $.Name }}{{ alias $.Name }},
 		"SELECT *"+

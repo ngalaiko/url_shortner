@@ -40,6 +40,10 @@ func (t *Tables) SelectUserByIds(ids []uint64) ([]*schema.User, error) {
 		uu = append(uu, value.(*schema.User))
 	}
 
+	if len(missingIds) == 0 {
+		return uu, nil
+	}
+
 	uuMissing := make([]*schema.User, 0, len(missingIds))
 	if err := t.db.Select(uu,
 		"SELECT *"+

@@ -40,6 +40,10 @@ func (t *Tables) SelectLinkByIds(ids []uint64) ([]*schema.Link, error) {
 		ll = append(ll, value.(*schema.Link))
 	}
 
+	if len(missingIds) == 0 {
+		return ll, nil
+	}
+
 	llMissing := make([]*schema.Link, 0, len(missingIds))
 	if err := t.db.Select(ll,
 		"SELECT *"+
