@@ -3,21 +3,63 @@
 package tables
 
 import (
-	"bytes"
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/ngalayko/url_shortner/server/dao"
-	"github.com/ngalayko/url_shortner/server/logger"
+	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/schema"
 )
 
-type UserTable struct {
-	db     *dao.Db
-	logger *logger.Logger
+// SelectUserById returns User from db or cache
+func (t *Tables) SelectUserById(id uint64) (*schema.User, error) {
+	ids := []uint64{id}
+
+	uu, err := t.SelectUserByIds(ids)
+	if err != nil {
+		return nil, err
+	}
+
+	return uu[0], nil
 }
 
-func (ut *UserTable) InsertUser(u *schema.User) error {
-	return u.db.Mutate(func(tx *dao.Tx) error {
+// SelectUserByIds returns Users from db or cache
+func (t *Tables) SelectUserByIds(ids []uint64) ([]*schema.User, error) {
+
+	uu := make([]*schema.User, 0, len(ids))
+
+	missingIds := make([]uint64, 0, len(ids))
+	for _, id := range ids {
+		value, ok := t.cache.Load(t.usersCacheKey(id))
+		if !ok {
+			missingIds = append(missingIds, id)
+			continue
+		}
+
+		uu = append(uu, value.(*schema.User))
+	}
+
+	uuMissing := make([]*schema.User, 0, len(missingIds))
+	if err := t.db.Select(uu,
+		"SELECT *"+
+			"FROM users"+
+			"WHERE id IN ("+helpers.Uint64sToString(missingIds)+")",
+	); err != nil {
+		return nil, err
+	}
+
+	for _, uMissing := range uuMissing {
+		uu = append(uu, uMissing)
+		t.cache.Store(t.usersCacheKey(uMissing.ID), uMissing)
+	}
+
+	return uu, nil
+}
+
+// InsertUser inserts User in db and cache
+func (t *Tables) InsertUser(u *schema.User) error {
+	return t.db.Mutate(func(tx *dao.Tx) error {
 
 		insertSQL := "INSERT INTO users" +
 			"(first_name, last_name, created_at, deleted_at)" +
@@ -33,21 +75,23 @@ func (ut *UserTable) InsertUser(u *schema.User) error {
 			return err
 		}
 
-		ut.logger.Info("User created",
+		t.logger.Info("User created",
 			zap.Reflect("$.Name", u),
 		)
+		t.cache.Store(t.usersCacheKey(u.ID), u)
 		return nil
 	})
 }
 
-func (ut *UserTable) UpdateUser(u *schema.User) error {
-	return u.db.Mutate(func(tx *dao.Tx) error {
+// UpdateUser updates User in db and cache
+func (t *Tables) UpdateUser(u *schema.User) error {
+	return t.db.Mutate(func(tx *dao.Tx) error {
 
 		updateSQL := "UPDATE users" +
 			"SET" +
-			fmt.Sprintf("first_name = %v,", u.LastName) +
-			fmt.Sprintf("last_name = %v,", u.CreatedAt) +
-			fmt.Sprintf("created_at = %v,", u.DeletedAt) +
+			fmt.Sprintf("first_name = %v,", u.FirstName) +
+			fmt.Sprintf("last_name = %v,", u.LastName) +
+			fmt.Sprintf("created_at = %v,", u.CreatedAt) +
 			fmt.Sprintf("deleted_at = %v", u.DeletedAt)
 
 		_, err := tx.Exec(updateSQL)
@@ -55,9 +99,14 @@ func (ut *UserTable) UpdateUser(u *schema.User) error {
 			return err
 		}
 
-		ut.logger.Info("User updated",
+		t.logger.Info("User updated",
 			zap.Reflect("$.Name", u),
 		)
+		t.cache.Store(t.usersCacheKey(u.ID), u)
 		return nil
 	})
+}
+
+func (t *Tables) usersCacheKey(id uint64) string {
+	return fmt.Sprintf("User:%d", id)
 }

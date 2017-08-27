@@ -3,9 +3,11 @@ package server
 import (
 	"context"
 
+	"github.com/ngalayko/url_shortner/server/cache"
 	"github.com/ngalayko/url_shortner/server/config"
 	"github.com/ngalayko/url_shortner/server/dao"
 	"github.com/ngalayko/url_shortner/server/dao/migrate"
+	"github.com/ngalayko/url_shortner/server/dao/tables"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/web"
 	"go.uber.org/zap"
@@ -22,7 +24,9 @@ var (
 	services = []newServiceFunc{
 		logger.NewContext,
 		config.NewContext,
+		cache.NewContext,
 		dao.NewContext,
+		tables.NewContext,
 		migrate.NewContext,
 	}
 )

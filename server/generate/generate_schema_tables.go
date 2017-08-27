@@ -1,3 +1,4 @@
+//go:generate go run generate_schema_tables.go
 package main
 
 import (
@@ -18,21 +19,63 @@ const (
 package tables
 
 import (
-	"bytes"
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/ngalayko/url_shortner/server/dao"
-	"github.com/ngalayko/url_shortner/server/logger"
+	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/schema"
 )
 
-type {{ $.Name }}Table struct {
-	db     *dao.Db
-	logger *logger.Logger
+// Select{{ $.Name }}ById returns {{ $.Name }} from db or cache
+func (t *Tables) Select{{ $.Name }}ById(id uint64) (*schema.{{ $.Name }}, error) {
+	ids := []uint64{id}
+
+	{{ alias $.Name }}{{ alias $.Name }}, err := t.Select{{ $.Name }}ByIds(ids)
+	if err != nil {
+		return nil, err
+	}
+
+	return {{ alias $.Name }}{{ alias $.Name }}[0], nil
 }
 
-func ({{ alias $.Name }}t *{{ $.Name }}Table) Insert{{ $.Name }}({{ alias $.Name }} *schema.{{ $.Name }}) error {
-	return {{ alias $.Name }}.db.Mutate(func(tx *dao.Tx) error {
+// Select{{ $.Name }}ByIds returns {{ $.Name }}s from db or cache
+func (t *Tables) Select{{ $.Name }}ByIds(ids []uint64) ([]*schema.{{ $.Name }}, error) {
+
+	{{ alias $.Name }}{{ alias $.Name }} := make([]*schema.{{ $.Name }}, 0, len(ids))
+
+	missingIds := make([]uint64, 0, len(ids))
+	for _, id := range ids {
+		value, ok := t.cache.Load(t.{{ $.TableName }}CacheKey(id))
+		if !ok {
+			missingIds = append(missingIds, id)
+			continue
+		}
+
+		{{ alias $.Name }}{{ alias $.Name }} = append({{ alias $.Name }}{{ alias $.Name }}, value.(*schema.{{ $.Name }}))
+	}
+
+	{{ alias $.Name }}{{ alias $.Name }}Missing := make([]*schema.{{ $.Name }}, 0, len(missingIds))
+	if err := t.db.Select({{ alias $.Name }}{{ alias $.Name }},
+		"SELECT *"+
+			"FROM {{ $.TableName }}"+
+			"WHERE id IN ("+helpers.Uint64sToString(missingIds)+")",
+	); err != nil {
+		return nil, err
+	}
+
+	for _, {{ alias $.Name }}Missing := range {{ alias $.Name }}{{ alias $.Name }}Missing {
+		{{ alias $.Name }}{{ alias $.Name }} = append({{ alias $.Name }}{{ alias $.Name }}, {{ alias $.Name }}Missing)
+		t.cache.Store(t.{{ $.TableName }}CacheKey({{ alias $.Name }}Missing.ID), {{ alias $.Name }}Missing)
+	}
+
+	return {{ alias $.Name }}{{ alias $.Name }}, nil
+}
+
+// Insert{{ $.Name }} inserts {{ $.Name }} in db and cache
+func (t *Tables) Insert{{ $.Name }}({{ alias $.Name }} *schema.{{ $.Name }}) error {
+	return t.db.Mutate(func(tx *dao.Tx) error {
 
 		insertSQL := "INSERT INTO {{ $.TableName }}" +
 			"({{ head .DbFields}}{{ range tail .DbFields }}, {{ . }}{{ end }})" +
@@ -46,19 +89,21 @@ func ({{ alias $.Name }}t *{{ $.Name }}Table) Insert{{ $.Name }}({{ alias $.Name
 			return err
 		}
 
-		{{ alias $.Name }}t.logger.Info("{{ $.Name }} created",
+		t.logger.Info("{{ $.Name }} created",
 			zap.Reflect("$.Name", {{ alias $.Name }}),
 		)
+		t.cache.Store(t.{{ $.TableName }}CacheKey({{ alias $.Name }}.ID), {{ alias $.Name }})
 		return nil
 	})
 }
 
-func ({{ alias $.Name }}t *{{ $.Name }}Table) Update{{ $.Name }}({{ alias $.Name }} *schema.{{ $.Name }}) error {
-	return {{ alias $.Name }}.db.Mutate(func(tx *dao.Tx) error {
+// Update{{ $.Name }} updates {{ $.Name }} in db and cache
+func (t *Tables) Update{{ $.Name }}({{ alias $.Name }} *schema.{{ $.Name }}) error {
+	return t.db.Mutate(func(tx *dao.Tx) error {
 
 		updateSQL := "UPDATE {{ $.TableName }}" +
 			"SET" +
-			{{ range $index, $element := tail $.Fields }}fmt.Sprintf("{{ index $.DbFields $index }} = %v,", {{ alias $.Name }}.{{ $element }}) +
+			{{ range $index, $element := body $.Fields }}fmt.Sprintf("{{ index $.DbFields $index }} = %v,", {{ alias $.Name }}.{{ $element }}) +
 			{{ end }}fmt.Sprintf("{{ last $.DbFields }} = %v", {{ alias $.Name }}.{{ last $.Fields }})
 
 		_, err := tx.Exec(updateSQL)
@@ -66,23 +111,28 @@ func ({{ alias $.Name }}t *{{ $.Name }}Table) Update{{ $.Name }}({{ alias $.Name
 			return err
 		}
 
-		{{ alias $.Name }}t.logger.Info("{{ $.Name }} updated",
+		t.logger.Info("{{ $.Name }} updated",
 			zap.Reflect("$.Name", {{ alias $.Name }}),
 		)
+		t.cache.Store(t.{{ $.TableName }}CacheKey({{ alias $.Name }}.ID), {{ alias $.Name }})
 		return nil
 	})
+}
+
+func (t *Tables) {{ $.TableName }}CacheKey(id uint64) string {
+	return fmt.Sprintf("{{ $.Name }}:%d", id)
 }
 `
 )
 
 type templateData struct {
-	Name      string
-	TableName string
-	Fields    []string
-	DbFields  []string
+	Name         string
+	TableName    string
+	Fields       []string
+	DbFields     []string
+	UniqueFields []string
 }
 
-//go:generate go run generate_schema_tables.go
 func main() {
 
 	tables := []struct {
@@ -118,6 +168,10 @@ func generate(typ reflect.Type, tableName string) error {
 
 		dbTag := getTag(field, "db")
 
+		if getTag(field, "unique") == "true" {
+			data.UniqueFields = append(data.UniqueFields, field.Name)
+		}
+
 		if dbTag == idTag {
 			continue
 		}
@@ -148,6 +202,13 @@ func getTemplateFuncs() template.FuncMap {
 		},
 		"tail": func(ss []string) []string {
 			return ss[1:]
+		},
+		"body": func(ss []string) []string {
+			if len(ss) == 1 {
+				return ss
+			}
+
+			return ss[:len(ss)-1]
 		},
 		"last": func(ss []string) string {
 			return ss[len(ss)-1]

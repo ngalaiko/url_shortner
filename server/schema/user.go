@@ -12,7 +12,7 @@ const (
 
 // User is a user db object
 type User struct {
-	ID        uint64     `json:"id" db:"id"`
+	ID        uint64     `json:"id" db:"id" unique:"true"`
 	FirstName string     `json:"first_name" db:"first_name"`
 	LastName  string     `json:"last_name" db:"last_name"`
 	CreatedAt time.Time  `json:"created_at" db:"created_at"`

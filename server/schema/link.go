@@ -4,7 +4,7 @@ import "time"
 
 // Link is a link db object
 type Link struct {
-	ID        uint64     `json:"id" db:"id"`
+	ID        uint64     `json:"id" db:"id" unique:"true"`
 	UserID    uint64     `json:"user_id" db:"user_id"`
 	URL       string     `json:"url" db:"url"`
 	ShortURL  string     `json:"short_url" db:"short_url"`
