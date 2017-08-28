@@ -14,7 +14,7 @@ import (
 
 var (
 	schemaDefinitionRegex = regexp.MustCompile(`type (?P<name>\w+) struct {`)
-	tablesArrayTemplate = regexp.MustCompile(`(?s)}{.*?}[^),]`)
+	tablesArrayTemplate   = regexp.MustCompile(`(?s)}{.*?}[^),]`)
 )
 
 const (
