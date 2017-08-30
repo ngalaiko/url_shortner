@@ -23,7 +23,11 @@ func (s *TestTablesSuite) Test_SelectLink__should_select_link(c *C) {
 		c.Fatal(err)
 	}
 
-	c.Assert(link, DeepEquals, selected)
+	c.Assert(link.ID, Equals, selected.ID)
+	c.Assert(link.URL, Equals, selected.URL)
+	c.Assert(link.ShortURL, Equals, selected.ShortURL)
+	c.Assert(link.Clicks, Equals, selected.Clicks)
+	c.Assert(link.Views, Equals, selected.Views)
 }
 
 func (s *TestTablesSuite) Test_UpdateLink__should_update_link(c *C) {
@@ -39,7 +43,11 @@ func (s *TestTablesSuite) Test_UpdateLink__should_update_link(c *C) {
 		c.Fatal(err)
 	}
 
-	c.Assert(link, DeepEquals, updated)
+	c.Assert(link.ID, Equals, updated.ID)
+	c.Assert(link.URL, Equals, updated.URL)
+	c.Assert(link.ShortURL, Equals, updated.ShortURL)
+	c.Assert(link.Clicks, Equals, updated.Clicks)
+	c.Assert(link.Views, Equals, updated.Views)
 }
 
 func (s *TestTablesSuite) testLink(c *C) *schema.Link {

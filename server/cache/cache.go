@@ -5,6 +5,7 @@ import (
 
 	"golang.org/x/sync/syncmap"
 
+	"fmt"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"go.uber.org/zap"
 )
@@ -14,6 +15,12 @@ const (
 )
 
 type cacheContextKey string
+
+// ICache is a cache interface
+type ICache interface {
+	Store(key string, value interface{})
+	Load(key string) (interface{}, bool)
+}
 
 // Cache is a cache service
 type Cache struct {
@@ -28,15 +35,16 @@ func NewContext(ctx context.Context, cache interface{}) context.Context {
 		ctx = context.Background()
 	}
 
-	if _, ok := cache.(*Cache); !ok {
+	if _, ok := cache.(ICache); !ok {
 		cache = newCache(ctx)
 	}
 
 	return context.WithValue(ctx, ctxKey, cache)
 }
 
-func FromContext(ctx context.Context) *Cache {
-	if cache, ok := ctx.Value(ctxKey).(*Cache); ok {
+func FromContext(ctx context.Context) ICache {
+	if cache, ok := ctx.Value(ctxKey).(ICache); ok {
+		fmt.Printf("from context cache")
 		return cache
 	}
 
@@ -45,8 +53,7 @@ func FromContext(ctx context.Context) *Cache {
 
 func newCache(ctx context.Context) *Cache {
 	return &Cache{
-		logger: logger.FromContext(ctx),
-
+		logger:   logger.FromContext(ctx),
 		cacheMap: &syncmap.Map{},
 	}
 }

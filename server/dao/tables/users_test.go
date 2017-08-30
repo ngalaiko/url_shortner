@@ -23,7 +23,9 @@ func (s *TestTablesSuite) Test_SelectUser__should_select_user(c *C) {
 		c.Fatal(err)
 	}
 
-	c.Assert(user, DeepEquals, selected)
+	c.Assert(user.ID, Equals, selected.ID)
+	c.Assert(user.FirstName, Equals, selected.FirstName)
+	c.Assert(user.LastName, Equals, selected.LastName)
 }
 
 func (s *TestTablesSuite) Test_UpdateUser__should_update_user(c *C) {
@@ -39,7 +41,9 @@ func (s *TestTablesSuite) Test_UpdateUser__should_update_user(c *C) {
 		c.Fatal(err)
 	}
 
-	c.Assert(user, DeepEquals, updated)
+	c.Assert(user.ID, Equals, updated.ID)
+	c.Assert(user.FirstName, Equals, updated.FirstName)
+	c.Assert(user.LastName, Equals, updated.LastName)
 }
 
 func (s *TestTablesSuite) testUser(c *C) *schema.User {

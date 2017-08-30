@@ -5,9 +5,9 @@ import (
 	"log"
 	"testing"
 
-	"go.uber.org/zap"
 	. "gopkg.in/check.v1"
 
+	"github.com/ngalayko/url_shortner/server/cache"
 	"github.com/ngalayko/url_shortner/server/config"
 	"github.com/ngalayko/url_shortner/server/dao/migrate"
 	"github.com/ngalayko/url_shortner/server/logger"
@@ -46,20 +46,12 @@ func (s *TestTablesSuite) SetUpSuite(c *C) {
 }
 
 func (s *TestTablesSuite) init() {
-	s.ctx = logger.NewContext(s.ctx, s.initLogger())
+	s.ctx = cache.NewContext(nil, cache.NewStubCache())
+	s.ctx = logger.NewContext(s.ctx, logger.NewTestLogger())
 	s.ctx = config.NewContext(s.ctx, s.initConfig())
 	s.ctx = migrate.NewContext(s.ctx, nil)
 
 	s.service = FromContext(s.ctx)
-}
-
-func (s *TestTablesSuite) initLogger() *logger.Logger {
-	l, err := zap.NewDevelopment()
-	if err != nil {
-		log.Panicf("error while init logger: %s ", err)
-	}
-
-	return &logger.Logger{l}
 }
 
 func (s *TestTablesSuite) initConfig() *config.Config {

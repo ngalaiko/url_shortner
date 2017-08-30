@@ -1,11 +1,15 @@
 package web
 
-import "github.com/valyala/fasthttp"
+import (
+	"context"
 
-func (w *Web) postHandlers(ctx *fasthttp.RequestCtx) {
+	"github.com/valyala/fasthttp"
+)
 
-	switch string(ctx.RequestURI()) {
+func (w *Web) postHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCtx) {
+
+	switch string(requestCtx.RequestURI()) {
 	default:
-		ctx.NotFound()
+		requestCtx.NotFound()
 	}
 }

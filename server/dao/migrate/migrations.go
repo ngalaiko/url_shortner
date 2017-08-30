@@ -35,7 +35,7 @@ func migrations() []*migration {
 				id         BIGSERIAL     NOT NULL PRIMARY KEY,
 				first_name VARCHAR(255)  NOT NULL,
 				last_name  VARCHAR(255)  NOT NULL,
-				created_at TIMESTAMP     NOT NULL DEFAULT NOW(),
+				created_at TIMESTAMP     NOT NULL,
 				deleted_at TIMESTAMP
 			)
 			`,
@@ -52,7 +52,7 @@ func migrations() []*migration {
 				clicks     BIGINT    NOT NULL DEFAULT 0,
 				views      BIGINT    NOT NULL DEFAULT 0,
 				expired_at TIMESTAMP NOT NULL,
-				created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+				created_at TIMESTAMP NOT NULL,
 				deleted_at TIMESTAMP
 			)
 			`,

@@ -1,13 +1,17 @@
 package web
 
-import "github.com/valyala/fasthttp"
+import (
+	"context"
 
-func (w *Web) getHandlers(ctx *fasthttp.RequestCtx) {
+	"github.com/valyala/fasthttp"
+)
 
-	switch string(ctx.RequestURI()) {
+func (w *Web) getHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCtx) {
+
+	switch string(requestCtx.RequestURI()) {
 	case "/health_check":
-		ctx.WriteString("ok")
+		requestCtx.WriteString("ok")
 	default:
-		ctx.NotFound()
+		requestCtx.NotFound()
 	}
 }

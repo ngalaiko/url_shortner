@@ -17,7 +17,7 @@ type tablesCtxKey string
 // Tables represents tables from db
 type Tables struct {
 	db     *dao.Db
-	cache  *cache.Cache
+	cache  cache.ICache
 	logger *logger.Logger
 }
 
