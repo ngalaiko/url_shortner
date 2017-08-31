@@ -85,6 +85,10 @@ func getSchemaNames() ([]string, error) {
 
 	var names []string
 	for _, file := range files {
+		if strings.Contains(file.Name(), "easyjson") {
+			continue
+		}
+
 		name, err := getSchemaName(schemaPath + "/" + file.Name())
 		if err != nil {
 			return nil, err
