@@ -20,7 +20,7 @@ type webCtxKey string
 type Web struct {
 	handler fasthttp.RequestHandler
 
-	config *config.Config
+	config config.WebConfig
 	logger *logger.Logger
 }
 
@@ -49,10 +49,10 @@ func FromContext(ctx context.Context) *Web {
 func newWeb(ctx context.Context) *Web {
 	w := &Web{
 		logger: logger.FromContext(ctx),
-		config: config.FromContext(ctx),
+		config: config.FromContext(ctx).Web,
 	}
 
-	w.initHandler()
+	w.initHandler(ctx)
 
 	return w
 }
@@ -64,31 +64,31 @@ func (w *Web) Serve() {
 	}()
 
 	w.logger.Info("listening http",
-		zap.String("address", w.config.Web.Address),
+		zap.String("address", w.config.Address),
 	)
 
-	if err := fasthttp.ListenAndServe(w.config.Web.Address, w.handler); err != nil {
+	if err := fasthttp.ListenAndServe(w.config.Address, w.handler); err != nil {
 		w.logger.Error("error while serving",
 			zap.Error(err),
 		)
 	}
 }
 
-func (w *Web) initHandler() {
-	w.handler = func(ctx *fasthttp.RequestCtx) {
+func (w *Web) initHandler(appCtx context.Context) {
+	w.handler = func(requestCtx *fasthttp.RequestCtx) {
 		w.logger.Info("handle request",
-			zap.ByteString("method", ctx.Method()),
-			zap.ByteString("url", ctx.RequestURI()),
-			zap.ByteString("body", ctx.PostBody()),
+			zap.ByteString("method", requestCtx.Method()),
+			zap.ByteString("url", requestCtx.RequestURI()),
+			zap.ByteString("body", requestCtx.PostBody()),
 		)
 
 		switch {
-		case ctx.IsGet():
-			w.getHandlers(ctx)
-		case ctx.IsPost():
-			w.postHandlers(ctx)
+		case requestCtx.IsGet():
+			w.getHandlers(appCtx, requestCtx)
+		case requestCtx.IsPost():
+			w.postHandlers(appCtx, requestCtx)
 		default:
-			ctx.NotFound()
+			requestCtx.NotFound()
 		}
 	}
 }

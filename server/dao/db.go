@@ -25,6 +25,7 @@ type dbCtxKey string
 type Db struct {
 	*sqlx.DB
 	logger *logger.Logger
+	config config.DbConfig
 }
 
 // NewContext stores Db in context
@@ -50,7 +51,7 @@ func FromContext(ctx context.Context) *Db {
 }
 
 func newDb(ctx context.Context) *Db {
-	cfg := config.FromContext(ctx)
+	cfg := config.FromContext(ctx).Db
 	l := logger.FromContext(ctx)
 
 	db := newDbHelper(cfg, l)
@@ -64,24 +65,24 @@ func newDb(ctx context.Context) *Db {
 	}
 
 	l.Info("db connection created",
-		zap.String("driver", cfg.Db.Driver),
-		zap.String("config", cfg.Db.Connect),
+		zap.String("driver", cfg.Driver),
+		zap.String("config", cfg.Connect),
 	)
 
 	return db
 }
 
-func newDbHelper(cfg *config.Config, l *logger.Logger) *Db {
+func newDbHelper(cfg config.DbConfig, l *logger.Logger) *Db {
 
-	db, err := sqlx.Open(cfg.Db.Driver, cfg.Db.Connect)
+	db, err := sqlx.Open(cfg.Driver, cfg.Connect)
 	if err != nil {
 		l.Panic("error while open db connection",
 			zap.Error(err),
 		)
 	}
 
-	db.SetMaxIdleConns(cfg.Db.MaxIdleConns)
-	db.SetMaxOpenConns(cfg.Db.MaxOpenConns)
+	db.SetMaxIdleConns(cfg.MaxIdleConns)
+	db.SetMaxOpenConns(cfg.MaxOpenConns)
 
 	l.Info("db connection created")
 
