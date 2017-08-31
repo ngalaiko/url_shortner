@@ -1,4 +1,4 @@
-package web
+package api
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func (w *Web) postHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCtx) {
+func (a *Api) postHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCtx) {
 
 	switch string(requestCtx.RequestURI()) {
 	default:

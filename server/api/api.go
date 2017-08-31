@@ -1,4 +1,4 @@
-package web
+package api
 
 import (
 	"context"
@@ -8,19 +8,21 @@ import (
 
 	"github.com/ngalayko/url_shortner/server/config"
 	"github.com/ngalayko/url_shortner/server/logger"
+	"github.com/ngalayko/url_shortner/server/dao/tables"
 )
 
 const (
-	ctxKey webCtxKey = "web_ctx_key"
+	ctxKey apiCtxKey = "api_ctx_key"
 )
 
-type webCtxKey string
+type apiCtxKey string
 
-// Web is a web service
-type Web struct {
+// Api is a web service
+type Api struct {
 	handler fasthttp.RequestHandler
-
 	config config.WebConfig
+
+	tables *tables.Tables
 	logger *logger.Logger
 }
 
@@ -30,7 +32,7 @@ func NewContext(ctx context.Context, web interface{}) context.Context {
 		ctx = context.Background()
 	}
 
-	if _, ok := web.(*Web); !ok {
+	if _, ok := web.(*Api); !ok {
 		web = newWeb(ctx)
 	}
 
@@ -38,18 +40,20 @@ func NewContext(ctx context.Context, web interface{}) context.Context {
 }
 
 // FromContext return web from context
-func FromContext(ctx context.Context) *Web {
-	if web, ok := ctx.Value(ctxKey).(*Web); ok {
+func FromContext(ctx context.Context) *Api {
+	if web, ok := ctx.Value(ctxKey).(*Api); ok {
 		return web
 	}
 
 	return newWeb(ctx)
 }
 
-func newWeb(ctx context.Context) *Web {
-	w := &Web{
-		logger: logger.FromContext(ctx),
+func newWeb(ctx context.Context) *Api {
+	w := &Api{
 		config: config.FromContext(ctx).Web,
+
+		logger: logger.FromContext(ctx),
+		tables: tables.FromContext(ctx),
 	}
 
 	w.initHandler(ctx)
@@ -58,25 +62,25 @@ func newWeb(ctx context.Context) *Web {
 }
 
 // Serve serve web with config credentials
-func (w *Web) Serve() {
+func (a *Api) Serve() {
 	defer func() {
 		recover()
 	}()
 
-	w.logger.Info("listening http",
-		zap.String("address", w.config.Address),
+	a.logger.Info("listening http",
+		zap.String("address", a.config.Address),
 	)
 
-	if err := fasthttp.ListenAndServe(w.config.Address, w.handler); err != nil {
-		w.logger.Error("error while serving",
+	if err := fasthttp.ListenAndServe(a.config.Address, a.handler); err != nil {
+		a.logger.Error("error while serving",
 			zap.Error(err),
 		)
 	}
 }
 
-func (w *Web) initHandler(appCtx context.Context) {
-	w.handler = func(requestCtx *fasthttp.RequestCtx) {
-		w.logger.Info("handle request",
+func (a *Api) initHandler(appCtx context.Context) {
+	a.handler = func(requestCtx *fasthttp.RequestCtx) {
+		a.logger.Info("handle request",
 			zap.ByteString("method", requestCtx.Method()),
 			zap.ByteString("url", requestCtx.RequestURI()),
 			zap.ByteString("body", requestCtx.PostBody()),
@@ -84,9 +88,9 @@ func (w *Web) initHandler(appCtx context.Context) {
 
 		switch {
 		case requestCtx.IsGet():
-			w.getHandlers(appCtx, requestCtx)
+			a.getHandlers(appCtx, requestCtx)
 		case requestCtx.IsPost():
-			w.postHandlers(appCtx, requestCtx)
+			a.postHandlers(appCtx, requestCtx)
 		default:
 			requestCtx.NotFound()
 		}

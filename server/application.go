@@ -3,14 +3,15 @@ package server
 import (
 	"context"
 
+	"go.uber.org/zap"
+
+	"github.com/ngalayko/url_shortner/server/api"
 	"github.com/ngalayko/url_shortner/server/cache"
 	"github.com/ngalayko/url_shortner/server/config"
 	"github.com/ngalayko/url_shortner/server/dao"
 	"github.com/ngalayko/url_shortner/server/dao/migrate"
 	"github.com/ngalayko/url_shortner/server/dao/tables"
 	"github.com/ngalayko/url_shortner/server/logger"
-	"github.com/ngalayko/url_shortner/server/web"
-	"go.uber.org/zap"
 )
 
 // Application is an application main object
@@ -58,5 +59,5 @@ func (app *Application) initServices() {
 
 // Serve serve web
 func (app *Application) Serve() {
-	web.FromContext(app.ctx).Serve()
+	api.FromContext(app.ctx).Serve()
 }
