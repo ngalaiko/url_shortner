@@ -6,6 +6,7 @@ generate:
 
 build: generate
 	go build -o ./bin/url_shortner ./cmd/main.go
+	easyjson --all ./schema
 
 build-alpine: deps generate
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/url_shortner ./cmd/main.go

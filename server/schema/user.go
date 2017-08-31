@@ -11,6 +11,7 @@ const (
 )
 
 // User is a user db object
+//easyjson:json
 type User struct {
 	ID        uint64     `json:"id" db:"id" unique:"true"`
 	FirstName string     `json:"first_name" db:"first_name"`

@@ -3,6 +3,7 @@ package schema
 import "time"
 
 // Link is a link db object
+//easyjson:json
 type Link struct {
 	ID        uint64     `json:"id" db:"id" unique:"true"`
 	UserID    uint64     `json:"user_id" db:"user_id"`
