@@ -10,7 +10,7 @@ build: generate
 build-alpine: deps generate
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/url_shortner ./cmd/main.go
 
-run:
+run: build
 	./bin/url_shortner --config=./config.yaml
 
 tests:
@@ -27,3 +27,5 @@ docker-build:
 
 docker-run: docker-build
 	docker run -p 8080:8080 -v $(shell pwd)/data:/tmp/data url_shortner
+
+.PHONY: generate
