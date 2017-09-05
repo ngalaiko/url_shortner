@@ -31,9 +31,10 @@ type structure struct {
 	Fields []field
 }
 
-type VisitorFunc func(n ast.Node) ast.Visitor
+type visitorFunc func(n ast.Node) ast.Visitor
 
-func (f VisitorFunc) Visit(n ast.Node) ast.Visitor { return f(n) }
+// Visit implements ast.Visitor interface
+func (f visitorFunc) Visit(n ast.Node) ast.Visitor { return f(n) }
 
 func init() {
 	if err := getSchemaNamesByAst(); err != nil {
@@ -51,7 +52,7 @@ func getSchemaNamesByAst() error {
 	}
 
 	for _, pkg := range pkgs {
-		ast.Walk(VisitorFunc(findTypes), pkg)
+		ast.Walk(visitorFunc(findTypes), pkg)
 	}
 
 	return nil
@@ -60,19 +61,19 @@ func getSchemaNamesByAst() error {
 func findTypes(n ast.Node) ast.Visitor {
 	switch n := n.(type) {
 	case *ast.Package:
-		return VisitorFunc(findTypes)
+		return visitorFunc(findTypes)
 	case *ast.File:
-		return VisitorFunc(findTypes)
+		return visitorFunc(findTypes)
 	case *ast.GenDecl:
 		if n.Tok == token.TYPE {
-			return VisitorFunc(findTypes)
+			return visitorFunc(findTypes)
 		}
 	case *ast.TypeSpec:
 		structs = append(structs, structure{
 			Name: n.Name.Name,
 		})
 
-		return VisitorFunc(findTypes)
+		return visitorFunc(findTypes)
 
 	case *ast.StructType:
 

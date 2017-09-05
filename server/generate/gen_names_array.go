@@ -30,7 +30,7 @@ const (
 type tableData struct {
 	Name       string
 	NamePlural string
-	SqlQueries []string
+	SQLQueries []string
 }
 
 func main() {

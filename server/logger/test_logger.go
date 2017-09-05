@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// NewTestLogger returns debug level logger
 func NewTestLogger() *Logger {
 	l, err := zap.NewDevelopment()
 	if err != nil {

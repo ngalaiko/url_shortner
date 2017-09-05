@@ -2,15 +2,16 @@ package cache
 
 import "fmt"
 
-type cacheStub struct{}
+type CacheStub struct{}
 
-func NewStubCache() *cacheStub {
+// NewStubCache returns stub cache
+func NewStubCache() *CacheStub {
 	fmt.Printf("stub cache")
-	return &cacheStub{}
+	return &CacheStub{}
 }
 
 // Store does nothing
-func (cs *cacheStub) Store(key string, value interface{}) {}
+func (cs *CacheStub) Store(key string, value interface{}) {}
 
 // Load returns nothing
-func (cs *cacheStub) Load(key string) (interface{}, bool) { return nil, false }
+func (cs *CacheStub) Load(key string) (interface{}, bool) { return nil, false }

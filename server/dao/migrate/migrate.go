@@ -84,6 +84,7 @@ func (m *Migrate) Apply() error {
 	return nil
 }
 
+// FLush flushes migrations
 func (m *Migrate) Flush() error {
 	migrations := append(initMigrations(), migrations()...)
 	for i := len(migrations) - 1; i >= 0; i-- {

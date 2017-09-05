@@ -42,6 +42,7 @@ func NewContext(ctx context.Context, cache interface{}) context.Context {
 	return context.WithValue(ctx, ctxKey, cache)
 }
 
+// FromContext returns cache from context
 func FromContext(ctx context.Context) ICache {
 	if cache, ok := ctx.Value(ctxKey).(ICache); ok {
 		fmt.Printf("from context cache")
