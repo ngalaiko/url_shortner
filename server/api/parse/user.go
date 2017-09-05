@@ -2,5 +2,28 @@
 
 package parse
 
+import (
+	"strconv"
+	"time"
 
+	"github.com/valyala/fasthttp"
 
+	"github.com/ngalayko/url_shortner/server/schema"
+)
+
+func User(args *fasthttp.Args) (*schema.User, error) {
+
+	result := &schema.User{}
+
+	var funcErr error
+	args.VisitAll(func(key, value []byte) {
+		switch string(key) {
+		case "first_name":
+			result.FirstName = string(value)
+		case "last_name":
+			result.LastName = string(value)
+		}
+	})
+
+	return result, funcErr
+}

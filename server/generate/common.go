@@ -1,24 +1,34 @@
 package main
 
 import (
+	"bytes"
 	"go/ast"
 	"go/parser"
+	"go/printer"
 	"go/token"
+	"regexp"
 	"strings"
 	"text/template"
 )
 
 var (
-	structs    = []structure{}
+	matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
+	matchAllCap   = regexp.MustCompile("([a-z0-9])([A-Z])")
+	structs       = []structure{}
 )
 
 const (
 	schemaPath = "../schema"
 )
 
+type field struct {
+	Name string
+	Type string
+}
+
 type structure struct {
 	Name   string
-	Fields []string
+	Fields []field
 }
 
 type VisitorFunc func(n ast.Node) ast.Visitor
@@ -67,7 +77,15 @@ func findTypes(n ast.Node) ast.Visitor {
 	case *ast.StructType:
 
 		for _, f := range n.Fields.List {
-			structs[len(structs)-1].Fields = append(structs[len(structs)-1].Fields, f.Names[0].Name)
+			b := &bytes.Buffer{}
+			if err := printer.Fprint(b, token.NewFileSet(), f.Type); err != nil {
+				return nil
+			}
+
+			structs[len(structs)-1].Fields = append(structs[len(structs)-1].Fields, field{
+				Name: f.Names[0].Name,
+				Type: b.String(),
+			})
 		}
 	}
 	return nil
@@ -104,5 +122,18 @@ func getTemplateFuncs() template.FuncMap {
 		"len": func(str []string) int {
 			return len(str)
 		},
+		"underscore": toSnakeCase,
+		"contains": func(str string, substr string) bool {
+			return strings.Contains(str, substr)
+		},
+		"tailStr": func(str string) string {
+			return str[1:]
+		},
 	}
+}
+
+func toSnakeCase(str string) string {
+	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
+	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
+	return strings.ToLower(snake)
 }

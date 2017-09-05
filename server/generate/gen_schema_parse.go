@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 	"text/template"
-	"unicode"
 )
 
 const (
@@ -17,8 +16,51 @@ const (
 
 package parse
 
+import (
+	"strconv"
+	"time"
 
+	"github.com/valyala/fasthttp"
 
+	"github.com/ngalayko/url_shortner/server/schema"
+)
+
+func {{ .Name }}(args *fasthttp.Args) (*schema.{{ .Name }}, error) {
+
+	result := &schema.{{ .Name }}{}
+
+	var funcErr error
+	args.VisitAll(func(key, value []byte) {
+		switch string(key) {
+		{{- range .Fields -}}
+			{{- if eq .Name "ID" }}
+			{{- else if contains .Type "time.Time" }}{{ else }}
+		case "{{ underscore .Name }}":
+			{{- if contains .Type "*" -}}
+			result.{{ .Name }} = new({{ tailStr .Type }})
+			{{- end -}}
+			{{- if contains .Type "string" }}
+			result.{{ .Name }} = string(value)
+			{{- else if contains .Type "int" }}
+			v, err := strconv.ParseInt(string(value), 10, 64)
+			if err != nil {
+				funcErr = err
+				break
+			}
+
+			{{- if contains .Type "*" -}}
+			*result.{{ .Name }} = {{ tailStr .Type }}(v)
+			{{ else }}
+			result.{{ .Name }} = {{ .Type }}(v)
+			{{- end -}}
+			{{- end -}}
+			{{- end }}
+		{{- end }}
+		}
+	})
+
+	return result, funcErr
+}
 `
 )
 
@@ -34,41 +76,13 @@ func main() {
 
 func generateParamParse(s structure) error {
 
-	file, err := os.Create(apiPath + "/" +strings.ToLower(s.Name) + ".go")
+	file, err := os.Create(apiPath + "/" + strings.ToLower(s.Name) + ".go")
 	if err != nil {
-		return fmt.Errorf(apiPath + "/" +strings.ToLower(s.Name) + ".go: %s", err)
+		return fmt.Errorf(apiPath+"/"+strings.ToLower(s.Name)+".go: %s", err)
 	}
 	defer file.Close()
 
-	paramsTemplate := template.Must(template.New(s.Name).Parse(paramsTemplate))
+	paramsTemplate := template.Must(template.New(s.Name).Funcs(getTemplateFuncs()).Parse(paramsTemplate))
 
 	return paramsTemplate.Execute(file, s)
-}
-
-//
-// source https://github.com/asaskevich/govalidator/blob/master/utils.go#L107-L119
-//
-func camelCaseToUnderscore(str string) string {
-	var output []rune
-	var segment []rune
-	for _, r := range str {
-		if !unicode.IsLower(r) {
-			output = addSegment(output, segment)
-			segment = nil
-		}
-		segment = append(segment, unicode.ToLower(r))
-	}
-	output = addSegment(output, segment)
-	return string(output)
-}
-
-func addSegment(inrune, segment []rune) []rune {
-	if len(segment) == 0 {
-		return inrune
-	}
-	if len(inrune) != 0 {
-		inrune = append(inrune, '_')
-	}
-	inrune = append(inrune, segment...)
-	return inrune
 }

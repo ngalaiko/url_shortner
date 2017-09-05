@@ -2,5 +2,49 @@
 
 package parse
 
+import (
+	"strconv"
+	"time"
 
+	"github.com/valyala/fasthttp"
 
+	"github.com/ngalayko/url_shortner/server/schema"
+)
+
+func Link(args *fasthttp.Args) (*schema.Link, error) {
+
+	result := &schema.Link{}
+
+	var funcErr error
+	args.VisitAll(func(key, value []byte) {
+		switch string(key) {
+		case "user_id":
+			v, err := strconv.ParseInt(string(value), 10, 64)
+			if err != nil {
+				funcErr = err
+				break
+			}
+			result.UserID = uint64(v)
+		case "url":
+			result.URL = string(value)
+		case "short_url":
+			result.ShortURL = string(value)
+		case "clicks":
+			v, err := strconv.ParseInt(string(value), 10, 64)
+			if err != nil {
+				funcErr = err
+				break
+			}
+			result.Clicks = uint64(v)
+		case "views":
+			v, err := strconv.ParseInt(string(value), 10, 64)
+			if err != nil {
+				funcErr = err
+				break
+			}
+			result.Views = uint64(v)
+		}
+	})
+
+	return result, funcErr
+}

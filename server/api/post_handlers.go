@@ -3,8 +3,8 @@ package api
 import (
 	"context"
 
-	"github.com/valyala/fasthttp"
 	"github.com/ngalayko/url_shortner/server/schema"
+	"github.com/valyala/fasthttp"
 )
 
 func (a *Api) postHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCtx) {
@@ -18,7 +18,5 @@ func (a *Api) postHandlers(appCtx context.Context, requestCtx *fasthttp.RequestC
 }
 
 func (a *Api) createLink(ctx *fasthttp.RequestCtx) {
-
-
 
 }
