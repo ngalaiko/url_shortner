@@ -7,8 +7,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/ngalayko/url_shortner/server/config"
-	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/dao/tables"
+	"github.com/ngalayko/url_shortner/server/logger"
 )
 
 const (
@@ -20,7 +20,7 @@ type apiCtxKey string
 // Api is a web service
 type Api struct {
 	handler fasthttp.RequestHandler
-	config config.WebConfig
+	config  config.WebConfig
 
 	tables *tables.Tables
 	logger *logger.Logger

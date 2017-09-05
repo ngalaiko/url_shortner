@@ -4,18 +4,19 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io/ioutil"
 	"log"
-	"os"
 	"regexp"
 	"strings"
 	"text/template"
 )
 
 var (
-	schemaDefinitionRegex = regexp.MustCompile(`type (?P<name>\w+) struct {`)
-	tablesArrayTemplate   = regexp.MustCompile(`(?s)string\n}{.*?}[^),]`)
+	tablesArrayTemplate = regexp.MustCompile(`(?s)string\n}{.*?}[^),]`)
+	structs             = []strGen{}
 )
 
 const (
@@ -35,21 +36,22 @@ const (
 type tableData struct {
 	Name       string
 	NamePlural string
+	SqlQueries []string
 }
 
 func main() {
-	names, err := getSchemaNames()
-	if err != nil {
-		log.Fatal(err)
+
+	if err := getSchemaNamesByAst(); err != nil {
+		panic(err)
 	}
 
 	tablesTemplate := template.Must(template.New("enums_template").Parse(tablesTemplate))
 
-	tablesData := make([]tableData, 0, len(names))
-	for _, name := range names {
+	tablesData := make([]tableData, 0, len(structs))
+	for _, str := range structs {
 		tablesData = append(tablesData, tableData{
-			Name:       name,
-			NamePlural: strings.ToLower(name) + "s",
+			Name:       str.Name,
+			NamePlural: strings.ToLower(str.Name) + "s",
 		})
 	}
 
@@ -58,64 +60,57 @@ func main() {
 		log.Fatal(err)
 	}
 
-	generateSchemaTabelsData, err := ioutil.ReadFile(generateSchemaTabelsFile)
+	generateSchemaTablesData, err := ioutil.ReadFile(generateSchemaTabelsFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	generateSchemaTabelsData = tablesArrayTemplate.ReplaceAll(generateSchemaTabelsData, tablesBuffer.Bytes())
+	generateSchemaTablesData = tablesArrayTemplate.ReplaceAll(generateSchemaTablesData, tablesBuffer.Bytes())
 
-	err = ioutil.WriteFile(generateSchemaTabelsFile, generateSchemaTabelsData, 0644)
+	err = ioutil.WriteFile(generateSchemaTabelsFile, generateSchemaTablesData, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func getSchemaNames() ([]string, error) {
-	d, err := os.Open(schemaPath)
-	if err != nil {
-		return nil, err
-	}
-	defer d.Close()
-
-	files, err := d.Readdir(-1)
-	if err != nil {
-		return nil, err
-	}
-
-	var names []string
-	for _, file := range files {
-		if strings.Contains(file.Name(), "easyjson") {
-			continue
-		}
-
-		name, err := getSchemaName(schemaPath + "/" + file.Name())
-		if err != nil {
-			return nil, err
-		}
-		names = append(names, name)
-	}
-
-	return names, nil
+type strGen struct {
+	Name string
 }
 
-func getSchemaName(filePath string) (string, error) {
-	file, err := os.Open(filePath)
+type VisitorFunc func(n ast.Node) ast.Visitor
+
+func (f VisitorFunc) Visit(n ast.Node) ast.Visitor { return f(n) }
+
+func getSchemaNamesByAst() error {
+
+	fs := token.NewFileSet()
+
+	pkgs, err := parser.ParseDir(fs, schemaPath, nil, 0)
 	if err != nil {
-		return "", nil
-	}
-	defer file.Close()
-
-	data, err := ioutil.ReadAll(file)
-	if err != nil {
-		return "", err
+		return err
 	}
 
-	match := schemaDefinitionRegex.FindSubmatch(data)
-
-	if len(match) < 2 {
-		return "", fmt.Errorf("probles with file: %s", filePath)
+	for _, pkg := range pkgs {
+		ast.Walk(VisitorFunc(findTypes), pkg)
 	}
 
-	return string(match[1]), nil
+	return nil
+}
+
+func findTypes(n ast.Node) ast.Visitor {
+	switch n := n.(type) {
+	case *ast.Package:
+		return VisitorFunc(findTypes)
+	case *ast.File:
+		return VisitorFunc(findTypes)
+	case *ast.GenDecl:
+		if n.Tok == token.TYPE {
+			return VisitorFunc(findTypes)
+		}
+	case *ast.TypeSpec:
+		structs = append(structs, strGen{
+			Name: n.Name.Name,
+		})
+	}
+	return nil
 }
