@@ -109,10 +109,9 @@ func (a *Api) initHandler(appCtx context.Context) {
 }
 
 func (a *Api) responseErr(ctx *fasthttp.RequestCtx, err error) {
-	resp := new(errResponse)
-	resp.Err = err
-
-	data, err := json.Marshal(resp)
+	data, err := json.Marshal(&errResponse{
+		Err: err,
+	})
 	if err != nil {
 		a.responseErr(ctx, err)
 	}
