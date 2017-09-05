@@ -3,7 +3,7 @@ all: deps generate build
 
 generate:
 	go generate ./generate/...
-	easyjson --all ./schema
+	easyjson ./schema
 
 build: generate
 	go build -o ./bin/url_shortner ./cmd/main.go

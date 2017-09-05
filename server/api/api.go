@@ -2,7 +2,11 @@ package api
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"time"
 
+	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 
@@ -16,6 +20,10 @@ const (
 )
 
 type apiCtxKey string
+
+type errResponse struct {
+	Err error `json:"err"`
+}
 
 // Api is a web service
 type Api struct {
@@ -79,12 +87,8 @@ func (a *Api) Serve() {
 }
 
 func (a *Api) initHandler(appCtx context.Context) {
+	start := time.Now()
 	a.handler = func(requestCtx *fasthttp.RequestCtx) {
-		a.logger.Info("handle request",
-			zap.ByteString("method", requestCtx.Method()),
-			zap.ByteString("url", requestCtx.RequestURI()),
-			zap.ByteString("body", requestCtx.PostBody()),
-		)
 
 		switch {
 		case requestCtx.IsGet():
@@ -94,5 +98,35 @@ func (a *Api) initHandler(appCtx context.Context) {
 		default:
 			requestCtx.NotFound()
 		}
+
+		a.logger.Info("handle request",
+			zap.ByteString("method", requestCtx.Method()),
+			zap.ByteString("url", requestCtx.RequestURI()),
+			zap.ByteString("body", requestCtx.PostBody()),
+			zap.Duration("duration", time.Since(start)),
+		)
 	}
+}
+
+func (a *Api) responseErr(ctx *fasthttp.RequestCtx, err error) {
+	resp := new(errResponse)
+	resp.Err = err
+
+	data, err := json.Marshal(resp)
+	if err != nil {
+		a.responseErr(ctx, err)
+	}
+
+	ctx.Response.SetStatusCode(http.StatusInternalServerError)
+	ctx.Response.AppendBody(data)
+}
+
+func (a *Api) responseData(ctx *fasthttp.RequestCtx, obj interface{}) {
+	data, err := easyjson.Marshal(obj.(easyjson.Marshaler))
+	if err != nil {
+		a.responseErr(ctx, err)
+	}
+
+	ctx.Response.SetStatusCode(http.StatusOK)
+	ctx.Response.AppendBody(data)
 }

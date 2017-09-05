@@ -2,9 +2,12 @@ package api
 
 import (
 	"context"
+	"time"
+
+	"github.com/mailru/easyjson"
+	"github.com/valyala/fasthttp"
 
 	"github.com/ngalayko/url_shortner/server/schema"
-	"github.com/valyala/fasthttp"
 )
 
 func (a *Api) postHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCtx) {
@@ -18,5 +21,17 @@ func (a *Api) postHandlers(appCtx context.Context, requestCtx *fasthttp.RequestC
 }
 
 func (a *Api) createLink(ctx *fasthttp.RequestCtx) {
+	link := &schema.Link{}
+	if err := easyjson.Unmarshal(ctx.PostBody(), link); err != nil {
+		a.responseErr(ctx, err)
+		return
+	}
 
+	link.CreatedAt = time.Now()
+	if err := a.tables.InsertLink(link); err != nil {
+		a.responseErr(ctx, err)
+		return
+	}
+
+	a.responseData(ctx, link)
 }
