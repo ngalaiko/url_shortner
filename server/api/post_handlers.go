@@ -20,9 +20,6 @@ func (a *Api) postHandlers(appCtx context.Context, requestCtx *fasthttp.RequestC
 	}
 }
 
-// todo:
-// - create 'service' package
-// - add indexes
 func (a *Api) createLink(ctx *fasthttp.RequestCtx) {
 	link := &schema.Link{}
 	if err := easyjson.Unmarshal(ctx.PostBody(), link); err != nil {

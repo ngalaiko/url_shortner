@@ -67,5 +67,15 @@ func migrations() []*migration {
 			`,
 			FlushSQL: "DELETE FROM users WHERE id = 0",
 		},
+		{
+			Name:     "unique links(url, user_id)",
+			RawSQL:   `CREATE UNIQUE INDEX links_user_id_url_unique_ix ON links(user_id, url) WHERE deleted_at IS NULL`,
+			FlushSQL: `DROP INDEX links_url_unique_ix`,
+		},
+		{
+			Name:     "unique links(short_url)",
+			RawSQL:   `CREATE UNIQUE INDEX links_short_url_unique_ix ON links(short_url) WHERE deleted_at IS NULL`,
+			FlushSQL: `DROP INDEX links_short_url_unique_ix`,
+		},
 	}
 }
