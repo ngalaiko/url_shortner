@@ -58,5 +58,14 @@ func migrations() []*migration {
 			`,
 			FlushSQL: `DROP TABLE IF EXISTS links`,
 		},
+		{
+			Name: "insert user for tests",
+			RawSQL: `INSERT INTO users
+				(id, first_name, last_name)
+				VALUES
+				(0, 'test', 'user')
+			`,
+			FlushSQL: "DELETE FROM users WHERE id = 0",
+		},
 	}
 }
