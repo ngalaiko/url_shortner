@@ -61,16 +61,16 @@ func migrations() []*migration {
 		{
 			Name: "insert user for tests",
 			RawSQL: `INSERT INTO users
-				(id, first_name, last_name)
+				(id, first_name, last_name, created_at)
 				VALUES
-				(0, 'test', 'user')
+				(0, 'test', 'user', NOW())
 			`,
 			FlushSQL: "DELETE FROM users WHERE id = 0",
 		},
 		{
 			Name:     "unique links(url, user_id)",
 			RawSQL:   `CREATE UNIQUE INDEX links_user_id_url_unique_ix ON links(user_id, url) WHERE deleted_at IS NULL`,
-			FlushSQL: `DROP INDEX links_url_unique_ix`,
+			FlushSQL: `DROP INDEX links_user_id_url_unique_ix`,
 		},
 		{
 			Name:     "unique links(short_url)",

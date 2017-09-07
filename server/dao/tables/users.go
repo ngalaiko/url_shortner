@@ -3,62 +3,55 @@
 package tables
 
 import (
+	"bytes"
 	"fmt"
 
 	"go.uber.org/zap"
 
 	"github.com/ngalayko/url_shortner/server/dao"
-	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/schema"
 )
 
 // SelectUserById returns User from db or cache
 func (t *Tables) SelectUserById(id uint64) (*schema.User, error) {
-	ids := []uint64{id}
-
-	uu, err := t.SelectUserByIds(ids)
-	if err != nil {
-		return nil, err
-	}
-
-	return uu[0], nil
+	return t.SelectUserByFields(map[string]interface{}{"id": id})
 }
 
 // SelectUserByIds returns Users from db or cache
-func (t *Tables) SelectUserByIds(ids []uint64) ([]*schema.User, error) {
+func (t *Tables) SelectUserByFields(fields map[string]interface{}) (*schema.User, error) {
 
-	uu := make([]*schema.User, 0, len(ids))
+	if len(fields) == 0 {
+		return nil, nil
+	}
 
-	missingIds := make([]uint64, 0, len(ids))
-	for _, id := range ids {
-		value, ok := t.cache.Load(t.usersCacheKey(id))
-		if !ok {
-			missingIds = append(missingIds, id)
-			continue
+	if value, ok := t.cache.Load(t.usersCacheKey(fields)); ok {
+		return value.(*schema.User), nil
+	}
+
+	b := bytes.Buffer{}
+	b.WriteString("SELECT * "+
+	"FROM users "+
+	"WHERE ")
+
+	i := 1
+	values := []interface{}{}
+	for k, v := range fields {
+		values = append(values, v)
+
+		if i > 1 {
+			b.WriteString(" AND \n")
 		}
 
-		uu = append(uu, value.(*schema.User))
+		b.WriteString(fmt.Sprintf("%s = $%d", k, i))
 	}
 
-	if len(missingIds) == 0 {
-		return uu, nil
-	}
-
-	uuMissing := make([]*schema.User, 0, len(missingIds))
-	if err := t.db.Select(&uuMissing,
-		"SELECT * "+
-			"FROM users "+
-			"WHERE id IN ("+helpers.Uint64sToString(missingIds)+")",
-	); err != nil {
+	u := &schema.User{}
+	if err := t.db.Get(u, b.String(), values...); err != nil {
 		return nil, err
 	}
 
-	for _, uMissing := range uuMissing {
-		uu = append(uu, uMissing)
-		t.cache.Store(t.usersCacheKey(uMissing.ID), uMissing)
-	}
-
-	return uu, nil
+	t.cache.Store(t.usersCacheKey(fields), u)
+	return u, nil
 }
 
 // InsertUser inserts User in db and cache
@@ -80,7 +73,7 @@ func (t *Tables) InsertUser(u *schema.User) error {
 		t.logger.Info("User created",
 			zap.Reflect("$.Name", u),
 		)
-		t.cache.Store(t.usersCacheKey(u.ID), u)
+		t.cache.Store(t.usersCacheKey(map[string]interface{}{"id": u.ID}), u)
 		return nil
 	})
 }
@@ -105,11 +98,18 @@ func (t *Tables) UpdateUser(u *schema.User) error {
 		t.logger.Info("User updated",
 			zap.Reflect("$.Name", u),
 		)
-		t.cache.Store(t.usersCacheKey(u.ID), u)
+		t.cache.Store(t.usersCacheKey(map[string]interface{}{"id": u.ID}), u)
 		return nil
 	})
 }
 
-func (t *Tables) usersCacheKey(id uint64) string {
-	return fmt.Sprintf("User:%d", id)
+func (t *Tables) usersCacheKey(fields map[string]interface{}) string {
+	b := bytes.Buffer{}
+	b.WriteString("user")
+
+	for k, v := range fields {
+		b.WriteString(fmt.Sprintf("_%s=%v", k, v))
+	}
+
+	return b.String()
 }

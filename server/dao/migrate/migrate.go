@@ -98,7 +98,10 @@ func (m *Migrate) Flush() error {
 		}
 
 		if _, err := m.Db.Exec(migrations[i].FlushSQL); err != nil {
-			return err
+			m.logger.Error("error flushing migration",
+				zap.String("name", migrations[i].Name),
+				zap.String("query", migrations[i].FlushSQL),
+			)
 		}
 	}
 

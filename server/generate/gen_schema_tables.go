@@ -90,62 +90,55 @@ const (
 package tables
 
 import (
+	"bytes"
 	"fmt"
 
 	"go.uber.org/zap"
 
 	"github.com/ngalayko/url_shortner/server/dao"
-	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/schema"
 )
 
 // Select{{ $.Name }}ById returns {{ $.Name }} from db or cache
 func (t *Tables) Select{{ $.Name }}ById(id uint64) (*schema.{{ $.Name }}, error) {
-	ids := []uint64{id}
-
-	{{ alias $.Name }}{{ alias $.Name }}, err := t.Select{{ $.Name }}ByIds(ids)
-	if err != nil {
-		return nil, err
-	}
-
-	return {{ alias $.Name }}{{ alias $.Name }}[0], nil
+	return t.Select{{ $.Name }}ByFields(map[string]interface{}{"id": id})
 }
 
 // Select{{ $.Name }}ByIds returns {{ $.Name }}s from db or cache
-func (t *Tables) Select{{ $.Name }}ByIds(ids []uint64) ([]*schema.{{ $.Name }}, error) {
+func (t *Tables) Select{{ $.Name }}ByFields(fields map[string]interface{}) (*schema.{{ $.Name }}, error) {
 
-	{{ alias $.Name }}{{ alias $.Name }} := make([]*schema.{{ $.Name }}, 0, len(ids))
+	if len(fields) == 0 {
+		return nil, nil
+	}
 
-	missingIds := make([]uint64, 0, len(ids))
-	for _, id := range ids {
-		value, ok := t.cache.Load(t.{{ $.TableName }}CacheKey(id))
-		if !ok {
-			missingIds = append(missingIds, id)
-			continue
+	if value, ok := t.cache.Load(t.{{ $.TableName }}CacheKey(fields)); ok {
+		return value.(*schema.{{ $.Name }}), nil
+	}
+
+	b := bytes.Buffer{}
+	b.WriteString("SELECT * "+
+	"FROM {{ $.TableName }} "+
+	"WHERE ")
+
+	i := 1
+	values := []interface{}{}
+	for k, v := range fields {
+		values = append(values, v)
+
+		if i > 1 {
+			b.WriteString(" AND \n")
 		}
 
-		{{ alias $.Name }}{{ alias $.Name }} = append({{ alias $.Name }}{{ alias $.Name }}, value.(*schema.{{ $.Name }}))
+		b.WriteString(fmt.Sprintf("%s = $%d", k, i))
 	}
 
-	if len(missingIds) == 0 {
-		return {{ alias $.Name }}{{ alias $.Name }}, nil
-	}
-
-	{{ alias $.Name }}{{ alias $.Name }}Missing := make([]*schema.{{ $.Name }}, 0, len(missingIds))
-	if err := t.db.Select(&{{ alias $.Name }}{{ alias $.Name }}Missing,
-		"SELECT * "+
-			"FROM {{ $.TableName }} "+
-			"WHERE id IN ("+helpers.Uint64sToString(missingIds)+")",
-	); err != nil {
+	{{ alias $.Name }} := &schema.{{ $.Name }}{}
+	if err := t.db.Get({{ alias $.Name }}, b.String(), values...); err != nil {
 		return nil, err
 	}
 
-	for _, {{ alias $.Name }}Missing := range {{ alias $.Name }}{{ alias $.Name }}Missing {
-		{{ alias $.Name }}{{ alias $.Name }} = append({{ alias $.Name }}{{ alias $.Name }}, {{ alias $.Name }}Missing)
-		t.cache.Store(t.{{ $.TableName }}CacheKey({{ alias $.Name }}Missing.ID), {{ alias $.Name }}Missing)
-	}
-
-	return {{ alias $.Name }}{{ alias $.Name }}, nil
+	t.cache.Store(t.{{ $.TableName }}CacheKey(fields), {{ alias $.Name }})
+	return {{ alias $.Name }}, nil
 }
 
 // Insert{{ $.Name }} inserts {{ $.Name }} in db and cache
@@ -167,7 +160,7 @@ func (t *Tables) Insert{{ $.Name }}({{ alias $.Name }} *schema.{{ $.Name }}) err
 		t.logger.Info("{{ $.Name }} created",
 			zap.Reflect("$.Name", {{ alias $.Name }}),
 		)
-		t.cache.Store(t.{{ $.TableName }}CacheKey({{ alias $.Name }}.ID), {{ alias $.Name }})
+		t.cache.Store(t.{{ $.TableName }}CacheKey(map[string]interface{}{"id": {{ alias $.Name }}.ID}), {{ alias $.Name }})
 		return nil
 	})
 }
@@ -190,13 +183,20 @@ func (t *Tables) Update{{ $.Name }}({{ alias $.Name }} *schema.{{ $.Name }}) err
 		t.logger.Info("{{ $.Name }} updated",
 			zap.Reflect("$.Name", {{ alias $.Name }}),
 		)
-		t.cache.Store(t.{{ $.TableName }}CacheKey({{ alias $.Name }}.ID), {{ alias $.Name }})
+		t.cache.Store(t.{{ $.TableName }}CacheKey(map[string]interface{}{"id": {{ alias $.Name }}.ID}), {{ alias $.Name }})
 		return nil
 	})
 }
 
-func (t *Tables) {{ $.TableName }}CacheKey(id uint64) string {
-	return fmt.Sprintf("{{ $.Name }}:%d", id)
+func (t *Tables) {{ $.TableName }}CacheKey(fields map[string]interface{}) string {
+	b := bytes.Buffer{}
+	b.WriteString("{{ underscore $.Name }}")
+
+	for k, v := range fields {
+		b.WriteString(fmt.Sprintf("_%s=%v", k, v))
+	}
+
+	return b.String()
 }
 `
 )

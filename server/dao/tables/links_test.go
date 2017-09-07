@@ -55,7 +55,8 @@ func (s *TestTablesSuite) testLink(c *C) *schema.Link {
 
 	link := &schema.Link{
 		UserID:    s.testUser(c).ID,
-		URL:       fmt.Sprintf("link %d", s.linksCount),
+		URL:       fmt.Sprintf("link url %d", s.linksCount),
+		ShortURL:  fmt.Sprintf("link short url %d", s.linksCount),
 		CreatedAt: time.Now(),
 	}
 

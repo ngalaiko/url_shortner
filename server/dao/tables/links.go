@@ -3,62 +3,55 @@
 package tables
 
 import (
+	"bytes"
 	"fmt"
 
 	"go.uber.org/zap"
 
 	"github.com/ngalayko/url_shortner/server/dao"
-	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/schema"
 )
 
 // SelectLinkById returns Link from db or cache
 func (t *Tables) SelectLinkById(id uint64) (*schema.Link, error) {
-	ids := []uint64{id}
-
-	ll, err := t.SelectLinkByIds(ids)
-	if err != nil {
-		return nil, err
-	}
-
-	return ll[0], nil
+	return t.SelectLinkByFields(map[string]interface{}{"id": id})
 }
 
 // SelectLinkByIds returns Links from db or cache
-func (t *Tables) SelectLinkByIds(ids []uint64) ([]*schema.Link, error) {
+func (t *Tables) SelectLinkByFields(fields map[string]interface{}) (*schema.Link, error) {
 
-	ll := make([]*schema.Link, 0, len(ids))
+	if len(fields) == 0 {
+		return nil, nil
+	}
 
-	missingIds := make([]uint64, 0, len(ids))
-	for _, id := range ids {
-		value, ok := t.cache.Load(t.linksCacheKey(id))
-		if !ok {
-			missingIds = append(missingIds, id)
-			continue
+	if value, ok := t.cache.Load(t.linksCacheKey(fields)); ok {
+		return value.(*schema.Link), nil
+	}
+
+	b := bytes.Buffer{}
+	b.WriteString("SELECT * "+
+	"FROM links "+
+	"WHERE ")
+
+	i := 1
+	values := []interface{}{}
+	for k, v := range fields {
+		values = append(values, v)
+
+		if i > 1 {
+			b.WriteString(" AND \n")
 		}
 
-		ll = append(ll, value.(*schema.Link))
+		b.WriteString(fmt.Sprintf("%s = $%d", k, i))
 	}
 
-	if len(missingIds) == 0 {
-		return ll, nil
-	}
-
-	llMissing := make([]*schema.Link, 0, len(missingIds))
-	if err := t.db.Select(&llMissing,
-		"SELECT * "+
-			"FROM links "+
-			"WHERE id IN ("+helpers.Uint64sToString(missingIds)+")",
-	); err != nil {
+	l := &schema.Link{}
+	if err := t.db.Get(l, b.String(), values...); err != nil {
 		return nil, err
 	}
 
-	for _, lMissing := range llMissing {
-		ll = append(ll, lMissing)
-		t.cache.Store(t.linksCacheKey(lMissing.ID), lMissing)
-	}
-
-	return ll, nil
+	t.cache.Store(t.linksCacheKey(fields), l)
+	return l, nil
 }
 
 // InsertLink inserts Link in db and cache
@@ -80,7 +73,7 @@ func (t *Tables) InsertLink(l *schema.Link) error {
 		t.logger.Info("Link created",
 			zap.Reflect("$.Name", l),
 		)
-		t.cache.Store(t.linksCacheKey(l.ID), l)
+		t.cache.Store(t.linksCacheKey(map[string]interface{}{"id": l.ID}), l)
 		return nil
 	})
 }
@@ -109,11 +102,18 @@ func (t *Tables) UpdateLink(l *schema.Link) error {
 		t.logger.Info("Link updated",
 			zap.Reflect("$.Name", l),
 		)
-		t.cache.Store(t.linksCacheKey(l.ID), l)
+		t.cache.Store(t.linksCacheKey(map[string]interface{}{"id": l.ID}), l)
 		return nil
 	})
 }
 
-func (t *Tables) linksCacheKey(id uint64) string {
-	return fmt.Sprintf("Link:%d", id)
+func (t *Tables) linksCacheKey(fields map[string]interface{}) string {
+	b := bytes.Buffer{}
+	b.WriteString("link")
+
+	for k, v := range fields {
+		b.WriteString(fmt.Sprintf("_%s=%v", k, v))
+	}
+
+	return b.String()
 }

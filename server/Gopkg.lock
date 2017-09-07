@@ -32,6 +32,12 @@
   revision = "e42267488fe361b9dc034be7a6bffef5b195bceb"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/mailru/easyjson"
+  packages = [".","buffer","jlexer","jwriter"]
+  revision = "2a92e673c9a6302dd05c3a691ae1f24aef46457d"
+
+[[projects]]
   name = "github.com/valyala/fasthttp"
   packages = [".","fasthttputil"]
   revision = "d42167fd04f636e20b005e9934159e95454233c7"
@@ -56,6 +62,18 @@
   version = "v1.5.0"
 
 [[projects]]
+  branch = "master"
+  name = "golang.org/x/sync"
+  packages = ["syncmap"]
+  revision = "f52d1811a62927559de87708c8913c1650ce4f26"
+
+[[projects]]
+  branch = "v1"
+  name = "gopkg.in/check.v1"
+  packages = ["."]
+  revision = "20d25e2804050c1cd24a7eea1e7a6447dd0e74ec"
+
+[[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -64,6 +82,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5646cc26e52ede45d55e82f55b85914f3dd7564511f36b327aff92d2fa8d7e66"
+  inputs-digest = "d6b11d250b4daaf27eb0a06c0c897f72312580d7650417ff9a89618fa3dd85ce"
   solver-name = "gps-cdcl"
   solver-version = 1

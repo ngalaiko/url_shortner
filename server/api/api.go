@@ -22,7 +22,7 @@ const (
 type apiCtxKey string
 
 type errResponse struct {
-	Err error `json:"err"`
+	Err string `json:"err"`
 }
 
 // Api is a web service
@@ -103,14 +103,14 @@ func (a *Api) initHandler(appCtx context.Context) {
 			zap.ByteString("method", requestCtx.Method()),
 			zap.ByteString("url", requestCtx.RequestURI()),
 			zap.ByteString("body", requestCtx.PostBody()),
-			zap.Duration("duration", time.Since(start)),
+			zap.String("duration", time.Since(start).String()),
 		)
 	}
 }
 
 func (a *Api) responseErr(ctx *fasthttp.RequestCtx, err error) {
-	data, err := json.Marshal(&errResponse{
-		Err: err,
+	data, err := json.Marshal(errResponse{
+		Err: err.Error(),
 	})
 	if err != nil {
 		a.responseErr(ctx, err)

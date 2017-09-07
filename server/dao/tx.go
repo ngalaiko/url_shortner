@@ -24,10 +24,7 @@ func (t *Tx) begin() (*Tx, error) {
 		return t, nil
 	}
 
-	id, err := helpers.RandomString(10)
-	if err != nil {
-		return nil, err
-	}
+	id := helpers.RandomString(10)
 
 	tx, err := t.db.Beginx()
 	if err != nil {
