@@ -12,6 +12,7 @@ import (
 	"github.com/ngalayko/url_shortner/server/dao/migrate"
 	"github.com/ngalayko/url_shortner/server/dao/tables"
 	"github.com/ngalayko/url_shortner/server/logger"
+	"github.com/ngalayko/url_shortner/server/services/links"
 )
 
 // Application is an application main object
@@ -29,6 +30,7 @@ var (
 		dao.NewContext,
 		tables.NewContext,
 		migrate.NewContext,
+		links.NewContext,
 	}
 )
 

@@ -6,16 +6,16 @@ generate:
 	easyjson ./schema
 
 build: generate
-	go build -o ./bin/url_shortner ./cmd/main.go
+	env GOGC=off go build -o ./bin/url_shortner ./cmd/main.go
 
 build-alpine: deps generate
-	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/url_shortner ./cmd/main.go
+	env GOGC=off CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/url_shortner ./cmd/main.go
 
 run: build
-	./bin/url_shortner --config=./config.yaml
+	env GOGC=off ./bin/url_shortner --config=./config.yaml
 
 tests:
-	go test ./...
+	env GOGC=off go test ./...
 
 fmt:
 	go fmt ./...

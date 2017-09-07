@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"time"
 
 	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
@@ -27,8 +26,7 @@ func (a *Api) createLink(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	link.CreatedAt = time.Now()
-	if err := a.tables.InsertLink(link); err != nil {
+	if err := a.links.CreateLink(link); err != nil {
 		a.responseErr(ctx, err)
 		return
 	}

@@ -11,8 +11,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/ngalayko/url_shortner/server/config"
-	"github.com/ngalayko/url_shortner/server/dao/tables"
 	"github.com/ngalayko/url_shortner/server/logger"
+	"github.com/ngalayko/url_shortner/server/services/links"
 )
 
 const (
@@ -29,9 +29,9 @@ type errResponse struct {
 type Api struct {
 	handler fasthttp.RequestHandler
 	config  config.WebConfig
+	logger  *logger.Logger
 
-	tables *tables.Tables
-	logger *logger.Logger
+	links *links.Links
 }
 
 // NewContext stores web in context
@@ -59,9 +59,9 @@ func FromContext(ctx context.Context) *Api {
 func newWeb(ctx context.Context) *Api {
 	w := &Api{
 		config: config.FromContext(ctx).Web,
-
 		logger: logger.FromContext(ctx),
-		tables: tables.FromContext(ctx),
+
+		links: links.FromContext(ctx),
 	}
 
 	w.initHandler(ctx)
