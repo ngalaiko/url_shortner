@@ -3,7 +3,6 @@ package dao
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
@@ -56,14 +55,6 @@ func newDb(ctx context.Context) *Db {
 
 	db := newDbHelper(cfg, l)
 
-	if err := db.Healthcheck(ctx); err != nil {
-		l.Error("error connection db",
-			zap.Error(err),
-		)
-		time.Sleep(time.Second)
-		return newDb(ctx)
-	}
-
 	l.Info("db connection created",
 		zap.String("driver", cfg.Driver),
 		zap.String("config", cfg.Connect),
@@ -90,12 +81,6 @@ func newDbHelper(cfg config.DbConfig, l *logger.Logger) *Db {
 		DB:     db,
 		logger: l,
 	}
-}
-
-// Healthcheck is a db healthcheck
-func (db *Db) Healthcheck(ctx context.Context) error {
-	_, err := db.Exec("SELECT 1")
-	return err
 }
 
 // Mutate opens new tx, applies callback func and close tx

@@ -11,10 +11,21 @@ func (a *Api) getHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCt
 
 	switch string(requestCtx.RequestURI()) {
 	case "/health_check":
-		requestCtx.WriteString("ok")
+		a.healthCheck(requestCtx)
+
 	default:
 		a.queryLink(requestCtx)
+
 	}
+}
+
+func (a *Api) healthCheck(requestCtx *fasthttp.RequestCtx) {
+
+	a.responseData(requestCtx, struct {
+		Status bool `json:"status"`
+	}{
+		Status: true,
+	})
 }
 
 func (a *Api) queryLink(ctx *fasthttp.RequestCtx) {
@@ -26,5 +37,5 @@ func (a *Api) queryLink(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	ctx.Redirect(link.URL, http.StatusMovedPermanently)
+	ctx.Redirect(link.URL, http.StatusFound)
 }

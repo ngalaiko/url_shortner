@@ -2,19 +2,20 @@ package links
 
 import (
 	"context"
+	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/ngalayko/url_shortner/server/dao/tables"
 	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/schema"
-	"net/url"
-	"fmt"
 )
 
 const (
 	defaultExpire      = 24 * time.Hour
 	defaultShortUrlLen = 6
+	httpScheme         = "http"
 )
 
 // Links is a links service
@@ -38,6 +39,10 @@ func (l *Links) CreateLink(link *schema.Link) error {
 		return err
 	}
 
+	if len(uri.Scheme) == 0 {
+		uri.Scheme = httpScheme
+	}
+
 	now := time.Now()
 	link.URL = uri.String()
 	link.CreatedAt = now
@@ -59,7 +64,7 @@ func (l *Links) QueryLinkByShortUrl(shortUrl string) (*schema.Link, error) {
 		return nil, err
 	}
 
-	if link.ExpiredAt.After(time.Now()) {
+	if link.ExpiredAt.Before(time.Now()) {
 		return link, fmt.Errorf("Link has expired at %s", link.ExpiredAt)
 	}
 

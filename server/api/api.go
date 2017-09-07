@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/ngalayko/url_shortner/server/config"
+	"github.com/ngalayko/url_shortner/server/dao"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/services/links"
 )
@@ -30,6 +31,7 @@ type Api struct {
 	handler fasthttp.RequestHandler
 	config  config.WebConfig
 	logger  *logger.Logger
+	db      *dao.Db
 
 	links *links.Links
 }
@@ -60,6 +62,7 @@ func newWeb(ctx context.Context) *Api {
 	w := &Api{
 		config: config.FromContext(ctx).Web,
 		logger: logger.FromContext(ctx),
+		db:     dao.FromContext(ctx),
 
 		links: links.FromContext(ctx),
 	}
@@ -103,7 +106,7 @@ func (a *Api) initHandler(appCtx context.Context) {
 			zap.ByteString("method", requestCtx.Method()),
 			zap.ByteString("url", requestCtx.RequestURI()),
 			zap.ByteString("body", requestCtx.PostBody()),
-			zap.String("duration", time.Since(start).String()),
+			zap.Duration("duration", time.Since(start)),
 		)
 	}
 }
