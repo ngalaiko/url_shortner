@@ -117,8 +117,8 @@ func (t *Tables) Select{{ $.Name }}ByFields(fields map[string]interface{}) (*sch
 
 	b := bytes.Buffer{}
 	b.WriteString("SELECT * "+
-	"FROM {{ $.TableName }} "+
-	"WHERE ")
+		"FROM {{ $.TableName }} "+
+		"WHERE ")
 
 	i := 1
 	values := []interface{}{}
@@ -138,6 +138,7 @@ func (t *Tables) Select{{ $.Name }}ByFields(fields map[string]interface{}) (*sch
 	}
 
 	t.cache.Store(t.{{ $.TableName }}CacheKey(fields), {{ alias $.Name }})
+	t.cache.Store(t.{{ $.TableName }}CacheKey(map[string]interface{}{"id": {{ alias $.Name }}.ID}), {{ alias $.Name }})
 	return {{ alias $.Name }}, nil
 }
 

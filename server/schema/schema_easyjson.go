@@ -160,8 +160,6 @@ func easyjsonCef4e921DecodeGithubComNgalaykoUrlShortnerServerSchema1(in *jlexer.
 			out.URL = string(in.String())
 		case "short_url":
 			out.ShortURL = string(in.String())
-		case "clicks":
-			out.Clicks = uint64(in.Uint64())
 		case "views":
 			out.Views = uint64(in.Uint64())
 		case "expired_at":
@@ -222,12 +220,6 @@ func easyjsonCef4e921EncodeGithubComNgalaykoUrlShortnerServerSchema1(out *jwrite
 	first = false
 	out.RawString("\"short_url\":")
 	out.String(string(in.ShortURL))
-	if !first {
-		out.RawByte(',')
-	}
-	first = false
-	out.RawString("\"clicks\":")
-	out.Uint64(uint64(in.Clicks))
 	if !first {
 		out.RawByte(',')
 	}

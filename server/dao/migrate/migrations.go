@@ -49,7 +49,6 @@ func migrations() []*migration {
 				user_id    BIGINT    NOT NULL REFERENCES users(id),
 				url        TEXT      NOT NULL,
 				short_url  TEXT      NOT NULL,
-				clicks     BIGINT    NOT NULL DEFAULT 0,
 				views      BIGINT    NOT NULL DEFAULT 0,
 				expired_at TIMESTAMP NOT NULL,
 				created_at TIMESTAMP NOT NULL,

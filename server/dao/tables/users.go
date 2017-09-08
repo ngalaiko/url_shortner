@@ -29,8 +29,8 @@ func (t *Tables) SelectUserByFields(fields map[string]interface{}) (*schema.User
 	}
 
 	b := bytes.Buffer{}
-	b.WriteString("SELECT * " +
-		"FROM users " +
+	b.WriteString("SELECT * "+
+		"FROM users "+
 		"WHERE ")
 
 	i := 1
@@ -51,6 +51,7 @@ func (t *Tables) SelectUserByFields(fields map[string]interface{}) (*schema.User
 	}
 
 	t.cache.Store(t.usersCacheKey(fields), u)
+	t.cache.Store(t.usersCacheKey(map[string]interface{}{"id": u.ID}), u)
 	return u, nil
 }
 

@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/ngalayko/url_shortner/server/dao/tables"
 	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/schema"
-	"strings"
+	"go.uber.org/zap"
 )
 
 const (
@@ -23,13 +24,51 @@ const (
 type Links struct {
 	logger *logger.Logger
 	tables *tables.Tables
+
+	//channel of link ids to increment views of
+	viewsQueue chan uint64
 }
 
 func newLinks(ctx context.Context) *Links {
-	return &Links{
+	l := &Links{
 		logger: logger.FromContext(ctx),
 		tables: tables.FromContext(ctx),
+
+		viewsQueue: make(chan uint64),
 	}
+
+	go l.loop()
+
+	return l
+}
+
+func (l *Links) loop() {
+	for id := range l.viewsQueue {
+		if err := l.incrementNextLink(id); err != nil {
+			l.logger.Error("error incrementing link",
+				zap.Error(err),
+			)
+		}
+	}
+}
+
+func (l *Links) incrementNextLink(linkId uint64) error {
+	link, err := l.tables.SelectLinkByFields(map[string]interface{}{"id": linkId})
+	if err != nil {
+		return err
+	}
+
+	link.Views += 1
+	if err := l.tables.UpdateLink(link); err != nil {
+		return err
+	}
+
+	l.logger.Info("link views incremented",
+		zap.Uint64("id", link.ID),
+		zap.Uint64("views", link.Views),
+	)
+
+	return nil
 }
 
 // CreateLink creates given link
@@ -72,6 +111,8 @@ func (l *Links) QueryLinkByShortUrl(shortUrl string) (*schema.Link, error) {
 	if link.ExpiredAt.Before(time.Now()) {
 		return link, fmt.Errorf("Link has expired at %s", link.ExpiredAt)
 	}
+
+	l.viewsQueue <- link.ID
 
 	return link, nil
 }

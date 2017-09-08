@@ -11,7 +11,6 @@ type Link struct {
 	UserID    uint64     `json:"user_id" db:"user_id"`
 	URL       string     `json:"url" db:"url"`
 	ShortURL  string     `json:"short_url" db:"short_url"`
-	Clicks    uint64     `json:"clicks" db:"clicks"`
 	Views     uint64     `json:"views" db:"views"`
 	ExpiredAt time.Time  `json:"expired_at" db:"expired_at"`
 	CreatedAt time.Time  `json:"created_at" db:"created_at"`

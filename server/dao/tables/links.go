@@ -29,8 +29,8 @@ func (t *Tables) SelectLinkByFields(fields map[string]interface{}) (*schema.Link
 	}
 
 	b := bytes.Buffer{}
-	b.WriteString("SELECT * " +
-		"FROM links " +
+	b.WriteString("SELECT * "+
+		"FROM links "+
 		"WHERE ")
 
 	i := 1
@@ -51,6 +51,7 @@ func (t *Tables) SelectLinkByFields(fields map[string]interface{}) (*schema.Link
 	}
 
 	t.cache.Store(t.linksCacheKey(fields), l)
+	t.cache.Store(t.linksCacheKey(map[string]interface{}{"id": l.ID}), l)
 	return l, nil
 }
 
@@ -59,13 +60,13 @@ func (t *Tables) InsertLink(l *schema.Link) error {
 	return t.db.Mutate(func(tx *dao.Tx) error {
 
 		insertSQL := "INSERT INTO links " +
-			"(user_id, url, short_url, clicks, views, expired_at, created_at, deleted_at) " +
+			"(user_id, url, short_url, views, expired_at, created_at, deleted_at) " +
 			"VALUES " +
-			"($1, $2, $3, $4, $5, $6, $7, $8) " +
+			"($1, $2, $3, $4, $5, $6, $7) " +
 			"RETURNING id"
 
 		var id uint64
-		if err := tx.Get(&id, insertSQL, l.UserID, l.URL, l.ShortURL, l.Clicks, l.Views, l.ExpiredAt, l.CreatedAt, l.DeletedAt); err != nil {
+		if err := tx.Get(&id, insertSQL, l.UserID, l.URL, l.ShortURL, l.Views, l.ExpiredAt, l.CreatedAt, l.DeletedAt); err != nil {
 			return err
 		}
 		l.ID = id
@@ -87,14 +88,13 @@ func (t *Tables) UpdateLink(l *schema.Link) error {
 			"user_id = $1, " +
 			"url = $2, " +
 			"short_url = $3, " +
-			"clicks = $4, " +
-			"views = $5, " +
-			"expired_at = $6, " +
-			"created_at = $7, " +
-			"deleted_at = $8 " +
+			"views = $4, " +
+			"expired_at = $5, " +
+			"created_at = $6, " +
+			"deleted_at = $7 " +
 			fmt.Sprintf("WHERE id = %d", l.ID)
 
-		_, err := tx.Exec(updateSQL, l.UserID, l.URL, l.ShortURL, l.Clicks, l.Views, l.ExpiredAt, l.CreatedAt, l.DeletedAt)
+		_, err := tx.Exec(updateSQL, l.UserID, l.URL, l.ShortURL, l.Views, l.ExpiredAt, l.CreatedAt, l.DeletedAt)
 		if err != nil {
 			return err
 		}
