@@ -10,6 +10,7 @@ import (
 	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/schema"
+	"strings"
 )
 
 const (
@@ -34,13 +35,21 @@ func newLinks(ctx context.Context) *Links {
 // CreateLink creates given link
 func (l *Links) CreateLink(link *schema.Link) error {
 
-	uri, err := url.Parse(link.URL)
-	if err != nil {
+	if err := prepareLink(link); err != nil {
 		return err
 	}
 
-	if len(uri.Scheme) == 0 {
-		uri.Scheme = httpScheme
+	return l.tables.InsertLink(link)
+}
+
+func prepareLink(link *schema.Link) error {
+	if !strings.HasPrefix(link.URL, httpScheme) {
+		link.URL = httpScheme + "://" + link.URL
+	}
+
+	uri, err := url.ParseRequestURI(link.URL)
+	if err != nil {
+		return err
 	}
 
 	now := time.Now()
@@ -48,10 +57,6 @@ func (l *Links) CreateLink(link *schema.Link) error {
 	link.CreatedAt = now
 	link.ShortURL = helpers.RandomString(defaultShortUrlLen)
 	link.ExpiredAt = now.Add(defaultExpire)
-
-	if err := l.tables.InsertLink(link); err != nil {
-		return err
-	}
 
 	return nil
 }
