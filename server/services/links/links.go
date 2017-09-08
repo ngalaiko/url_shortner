@@ -55,7 +55,7 @@ func (l *Links) loop() {
 }
 
 func (l *Links) incrementNextLink(linkId uint64) error {
-	link, err := l.tables.SelectLinkByFields(map[string]interface{}{"id": linkId})
+	link, err := l.tables.GetLinkById(linkId)
 	if err != nil {
 		return err
 	}

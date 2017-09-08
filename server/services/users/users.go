@@ -9,6 +9,7 @@ import (
 	"github.com/ngalayko/url_shortner/server/schema"
 )
 
+// Users is a users service
 type Users struct {
 	logger *logger.Logger
 	tables *tables.Tables
@@ -23,9 +24,10 @@ func newUsers(ctx context.Context) *Users {
 	return u
 }
 
+// QueryUserById returns user by id
 func (u *Users) QueryUserById(id uint64) (*schema.User, error) {
 
-	user, err := u.tables.GetLinkByFields(map[string]interface{}{"id": id})
+	user, err := u.tables.GetUserById(id)
 	if err != nil {
 		return nil, err
 	}

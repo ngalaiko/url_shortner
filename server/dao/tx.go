@@ -8,6 +8,7 @@ import (
 
 	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/logger"
+	"time"
 )
 
 // Tx is a tx wrapper over sqlx.Tx
@@ -17,6 +18,8 @@ type Tx struct {
 
 	tx *sqlx.Tx
 	id string
+
+	start time.Time
 }
 
 func (t *Tx) begin() (*Tx, error) {
@@ -33,8 +36,9 @@ func (t *Tx) begin() (*Tx, error) {
 
 	t.id = id
 	t.tx = tx
+	t.start = time.Now()
 
-	t.logger.Debug("begin tx",
+	t.logger.Info("begin tx",
 		zap.String("id", t.id),
 	)
 
@@ -48,7 +52,7 @@ func (t *Tx) Get(dest interface{}, query string, args ...interface{}) error {
 		return err
 	}
 
-	t.logger.Debug("exec sql query",
+	t.logger.Info("exec sql query",
 		zap.String("tx id", t.id),
 		zap.String("query", query),
 		zap.Reflect("args", args),
@@ -64,10 +68,13 @@ func (t *Tx) Exec(query string, args ...interface{}) (sql.Result, error) {
 		return nil, err
 	}
 
-	t.logger.Debug("exec sql query",
+	start := time.Now()
+
+	defer t.logger.Info("exec sql query",
 		zap.String("tx id", t.id),
 		zap.String("query", query),
 		zap.Reflect("args", args),
+		zap.Duration("duration", time.Since(start)),
 	)
 
 	return t.tx.Exec(query, args...)
@@ -75,8 +82,9 @@ func (t *Tx) Exec(query string, args ...interface{}) (sql.Result, error) {
 
 // Commit commits tx
 func (t *Tx) Commit() error {
-	t.logger.Debug("commit tx",
+	defer t.logger.Info("commit tx",
 		zap.String("id", t.id),
+		zap.Duration("duration", time.Since(t.start)),
 	)
 
 	return t.tx.Commit()
@@ -84,8 +92,9 @@ func (t *Tx) Commit() error {
 
 // Rollback rollbacks tx
 func (t *Tx) Rollback() error {
-	t.logger.Debug("begin tx",
+	defer t.logger.Info("begin tx",
 		zap.String("id", t.id),
+		zap.Duration("duration", time.Since(t.start)),
 	)
 
 	return t.tx.Rollback()

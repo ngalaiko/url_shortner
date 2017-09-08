@@ -6,3 +6,4 @@ Db:
 
 Web:
   Address: "0.0.0.0:8080"
+  PprofAddress: "0.0.0.0:8090"

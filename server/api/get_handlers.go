@@ -31,6 +31,11 @@ func (a *Api) getHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCt
 func (a *Api) queryLink(ctx *fasthttp.RequestCtx) {
 	shortUrl := string(ctx.RequestURI())[1:]
 
+	if len(shortUrl) == 0 {
+		ctx.NotFound()
+		return
+	}
+
 	link, err := a.links.QueryLinkByShortUrl(shortUrl)
 	switch {
 	case err == sql.ErrNoRows:

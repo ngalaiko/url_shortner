@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"go.uber.org/zap"
+	"time"
 )
 
 const (
@@ -61,24 +62,34 @@ func newCache(ctx context.Context) *Cache {
 
 // Store stores value in cache
 func (c *Cache) Store(key string, value interface{}) {
-	c.logger.Debug("store value in cache",
-		zap.String("key", key),
-		zap.Reflect("value", value),
-	)
+	start := time.Now()
+
+	if _, ok := c.cacheMap.Load(key); ok {
+		return
+	}
 
 	c.cacheMap.Store(key, value)
+
+	c.logger.Info("store value in cache",
+		zap.String("key", key),
+		zap.Reflect("value", value),
+		zap.Duration("duration", time.Since(start)),
+	)
 }
 
 // Load return value from cache
 func (c *Cache) Load(key string) (interface{}, bool) {
+	start := time.Now()
+
 	value, ok := c.cacheMap.Load(key)
 	if !ok {
 		return nil, false
 	}
 
-	c.logger.Debug("load value from cache",
+	c.logger.Info("load value from cache",
 		zap.String("key", key),
 		zap.Reflect("value", value),
+		zap.Duration("duration", time.Since(start)),
 	)
 
 	return value, true

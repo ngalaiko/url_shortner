@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	_ "net/http/pprof"
 	"time"
 
 	"github.com/mailru/easyjson"
@@ -79,6 +80,17 @@ func newWeb(ctx context.Context) *Api {
 func (a *Api) Serve() {
 	defer func() {
 		recover()
+	}()
+
+	go func() {
+		a.logger.Info("listening pprof",
+			zap.String("address", a.config.PprofAddress),
+		)
+		if err := http.ListenAndServe(a.config.PprofAddress, nil); err != nil {
+			a.logger.Error("error while start pprof",
+				zap.Error(err),
+			)
+		}
 	}()
 
 	a.logger.Info("listening http",
