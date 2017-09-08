@@ -2,16 +2,18 @@ package links
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/url"
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/ngalayko/url_shortner/server/dao/tables"
 	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/schema"
-	"go.uber.org/zap"
 )
 
 const (
@@ -103,13 +105,17 @@ func prepareLink(link *schema.Link) error {
 // QueryLinkByShortUrl returns link by short url
 func (l *Links) QueryLinkByShortUrl(shortUrl string) (*schema.Link, error) {
 
-	link, err := l.tables.SelectLinkByFields(map[string]interface{}{"short_url": shortUrl})
+	link, err := l.tables.GetLinkByFields(map[string]interface{}{"short_url": shortUrl})
 	if err != nil {
 		return nil, err
 	}
 
 	if link.ExpiredAt.Before(time.Now()) {
 		return link, fmt.Errorf("Link has expired at %s", link.ExpiredAt)
+	}
+
+	if link.DeletedAt != nil {
+		return nil, sql.ErrNoRows
 	}
 
 	l.viewsQueue <- link.ID

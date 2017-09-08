@@ -61,7 +61,7 @@ func newCache(ctx context.Context) *Cache {
 
 // Store stores value in cache
 func (c *Cache) Store(key string, value interface{}) {
-	c.logger.Info("store value in cache",
+	c.logger.Debug("store value in cache",
 		zap.String("key", key),
 		zap.Reflect("value", value),
 	)
@@ -76,7 +76,7 @@ func (c *Cache) Load(key string) (interface{}, bool) {
 		return nil, false
 	}
 
-	c.logger.Info("load value from cache",
+	c.logger.Debug("load value from cache",
 		zap.String("key", key),
 		zap.Reflect("value", value),
 	)

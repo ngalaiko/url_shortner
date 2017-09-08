@@ -14,6 +14,7 @@ import (
 	"github.com/ngalayko/url_shortner/server/dao"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/services/links"
+	"github.com/ngalayko/url_shortner/server/services/users"
 )
 
 const (
@@ -34,6 +35,7 @@ type Api struct {
 	db      *dao.Db
 
 	links *links.Links
+	users *users.Users
 }
 
 // NewContext stores web in context
@@ -65,6 +67,7 @@ func newWeb(ctx context.Context) *Api {
 		db:     dao.FromContext(ctx),
 
 		links: links.FromContext(ctx),
+		users: users.FromContext(ctx),
 	}
 
 	w.initHandler(ctx)

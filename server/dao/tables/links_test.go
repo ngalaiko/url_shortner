@@ -18,7 +18,7 @@ func (s *TestTablesSuite) Test_InsertLink__should_insert_link(c *C) {
 func (s *TestTablesSuite) Test_SelectLink__should_select_link(c *C) {
 	link := s.testLink(c)
 
-	selected, err := s.service.SelectLinkById(link.ID)
+	selected, err := s.service.GetLinkById(link.ID)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -26,7 +26,6 @@ func (s *TestTablesSuite) Test_SelectLink__should_select_link(c *C) {
 	c.Assert(link.ID, Equals, selected.ID)
 	c.Assert(link.URL, Equals, selected.URL)
 	c.Assert(link.ShortURL, Equals, selected.ShortURL)
-	c.Assert(link.Clicks, Equals, selected.Clicks)
 	c.Assert(link.Views, Equals, selected.Views)
 }
 
@@ -38,7 +37,7 @@ func (s *TestTablesSuite) Test_UpdateLink__should_update_link(c *C) {
 		c.Fatal(err)
 	}
 
-	updated, err := s.service.SelectLinkById(link.ID)
+	updated, err := s.service.GetLinkById(link.ID)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -46,7 +45,6 @@ func (s *TestTablesSuite) Test_UpdateLink__should_update_link(c *C) {
 	c.Assert(link.ID, Equals, updated.ID)
 	c.Assert(link.URL, Equals, updated.URL)
 	c.Assert(link.ShortURL, Equals, updated.ShortURL)
-	c.Assert(link.Clicks, Equals, updated.Clicks)
 	c.Assert(link.Views, Equals, updated.Views)
 }
 

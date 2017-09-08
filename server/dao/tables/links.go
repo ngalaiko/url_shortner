@@ -12,13 +12,13 @@ import (
 	"github.com/ngalayko/url_shortner/server/schema"
 )
 
-// SelectLinkById returns Link from db or cache
-func (t *Tables) SelectLinkById(id uint64) (*schema.Link, error) {
-	return t.SelectLinkByFields(map[string]interface{}{"id": id})
+// GetLinkById returns Link from db or cache
+func (t *Tables) GetLinkById(id uint64) (*schema.Link, error) {
+	return t.GetLinkByFields(map[string]interface{}{"id": id})
 }
 
-// SelectLinkByIds returns Links from db or cache
-func (t *Tables) SelectLinkByFields(fields map[string]interface{}) (*schema.Link, error) {
+// GetLinkByFields returns Links from db or cache
+func (t *Tables) GetLinkByFields(fields map[string]interface{}) (*schema.Link, error) {
 
 	if len(fields) == 0 {
 		return nil, nil

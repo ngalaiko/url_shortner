@@ -99,13 +99,13 @@ import (
 	"github.com/ngalayko/url_shortner/server/schema"
 )
 
-// Select{{ $.Name }}ById returns {{ $.Name }} from db or cache
-func (t *Tables) Select{{ $.Name }}ById(id uint64) (*schema.{{ $.Name }}, error) {
-	return t.Select{{ $.Name }}ByFields(map[string]interface{}{"id": id})
+// Get{{ $.Name }}ById returns {{ $.Name }} from db or cache
+func (t *Tables) Get{{ $.Name }}ById(id uint64) (*schema.{{ $.Name }}, error) {
+	return t.Get{{ $.Name }}ByFields(map[string]interface{}{"id": id})
 }
 
-// Select{{ $.Name }}ByIds returns {{ $.Name }}s from db or cache
-func (t *Tables) Select{{ $.Name }}ByFields(fields map[string]interface{}) (*schema.{{ $.Name }}, error) {
+// Get{{ $.Name }}ByFields returns {{ $.Name }}s from db or cache
+func (t *Tables) Get{{ $.Name }}ByFields(fields map[string]interface{}) (*schema.{{ $.Name }}, error) {
 
 	if len(fields) == 0 {
 		return nil, nil

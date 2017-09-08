@@ -18,7 +18,7 @@ func (s *TestTablesSuite) Test_InsertUser__should_insert_user(c *C) {
 func (s *TestTablesSuite) Test_SelectUser__should_select_user(c *C) {
 	user := s.testUser(c)
 
-	selected, err := s.service.SelectUserById(user.ID)
+	selected, err := s.service.GetUserById(user.ID)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -36,7 +36,7 @@ func (s *TestTablesSuite) Test_UpdateUser__should_update_user(c *C) {
 		c.Fatal(err)
 	}
 
-	updated, err := s.service.SelectUserById(user.ID)
+	updated, err := s.service.GetUserById(user.ID)
 	if err != nil {
 		c.Fatal(err)
 	}

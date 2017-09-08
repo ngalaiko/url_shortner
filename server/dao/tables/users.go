@@ -12,13 +12,13 @@ import (
 	"github.com/ngalayko/url_shortner/server/schema"
 )
 
-// SelectUserById returns User from db or cache
-func (t *Tables) SelectUserById(id uint64) (*schema.User, error) {
-	return t.SelectUserByFields(map[string]interface{}{"id": id})
+// GetUserById returns User from db or cache
+func (t *Tables) GetUserById(id uint64) (*schema.User, error) {
+	return t.GetUserByFields(map[string]interface{}{"id": id})
 }
 
-// SelectUserByIds returns Users from db or cache
-func (t *Tables) SelectUserByFields(fields map[string]interface{}) (*schema.User, error) {
+// GetUserByFields returns Users from db or cache
+func (t *Tables) GetUserByFields(fields map[string]interface{}) (*schema.User, error) {
 
 	if len(fields) == 0 {
 		return nil, nil

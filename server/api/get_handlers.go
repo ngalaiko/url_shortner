@@ -3,9 +3,9 @@ package api
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/valyala/fasthttp"
@@ -46,5 +46,21 @@ func (a *Api) queryLink(ctx *fasthttp.RequestCtx) {
 
 func (a *Api) queryUser(ctx *fasthttp.RequestCtx, id string) {
 
-	fmt.Println(id)
+	intID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		a.responseErr(ctx, err)
+		return
+	}
+
+	user, err := a.users.QueryUserById(uint64(intID))
+	switch {
+	case err == sql.ErrNoRows:
+		ctx.NotFound()
+		return
+	case err != nil:
+		a.responseErr(ctx, err)
+		return
+	}
+
+	a.responseData(ctx, user)
 }
