@@ -116,8 +116,8 @@ func (t *Tables) Select{{ $.Name }}ByFields(fields map[string]interface{}) (*sch
 	}
 
 	b := bytes.Buffer{}
-	b.WriteString("SELECT * "+
-		"FROM {{ $.TableName }} "+
+	b.WriteString("SELECT * " +
+		"FROM {{ $.TableName }} " +
 		"WHERE ")
 
 	i := 1

@@ -29,8 +29,8 @@ func (t *Tables) SelectLinkByFields(fields map[string]interface{}) (*schema.Link
 	}
 
 	b := bytes.Buffer{}
-	b.WriteString("SELECT * "+
-		"FROM links "+
+	b.WriteString("SELECT * " +
+		"FROM links " +
 		"WHERE ")
 
 	i := 1

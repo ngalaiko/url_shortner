@@ -29,8 +29,8 @@ func (t *Tables) SelectUserByFields(fields map[string]interface{}) (*schema.User
 	}
 
 	b := bytes.Buffer{}
-	b.WriteString("SELECT * "+
-		"FROM users "+
+	b.WriteString("SELECT * " +
+		"FROM users " +
 		"WHERE ")
 
 	i := 1
