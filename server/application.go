@@ -18,6 +18,8 @@ import (
 // Application is an application main object
 type Application struct {
 	ctx context.Context
+
+	logger *logger.Logger
 }
 
 type newServiceFunc func(context.Context, interface{}) context.Context
@@ -41,22 +43,19 @@ func NewApplication() *Application {
 		ctx: context.Background(),
 	}
 
-	app.initServices()
+	app.logger = logger.FromContext(app.ctx).Prefix("applicaiton")
 
-	l := logger.FromContext(app.ctx)
+	for _, service := range services {
+		app.ctx = service(app.ctx, nil)
+	}
+
 	if err := migrate.FromContext(app.ctx).Apply(); err != nil {
-		l.Panic("error while migrations",
+		app.logger.Panic("error while migrations",
 			zap.Error(err),
 		)
 	}
 
 	return app
-}
-
-func (app *Application) initServices() {
-	for _, service := range services {
-		app.ctx = service(app.ctx, nil)
-	}
 }
 
 // Serve serve web
