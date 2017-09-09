@@ -38,7 +38,7 @@ func (t *Tx) begin() (*Tx, error) {
 	t.tx = tx
 	t.start = time.Now()
 
-	t.logger.Info("begin tx",
+	t.logger.Debug("begin tx",
 		zap.String("id", t.id),
 	)
 
@@ -52,7 +52,7 @@ func (t *Tx) Get(dest interface{}, query string, args ...interface{}) error {
 		return err
 	}
 
-	t.logger.Info("exec sql query",
+	t.logger.Debug("exec sql query",
 		zap.String("tx id", t.id),
 		zap.String("query", query),
 		zap.Reflect("args", args),
@@ -70,32 +70,38 @@ func (t *Tx) Exec(query string, args ...interface{}) (sql.Result, error) {
 
 	start := time.Now()
 
-	defer t.logger.Info("exec sql query",
+	res, err := t.tx.Exec(query, args...)
+
+	t.logger.Debug("exec sql query",
 		zap.String("tx id", t.id),
 		zap.String("query", query),
 		zap.Reflect("args", args),
 		zap.Duration("duration", time.Since(start)),
 	)
 
-	return t.tx.Exec(query, args...)
+	return res, err
 }
 
 // Commit commits tx
 func (t *Tx) Commit() error {
-	defer t.logger.Info("commit tx",
+	err := t.tx.Commit()
+
+	t.logger.Debug("commit tx",
 		zap.String("id", t.id),
 		zap.Duration("duration", time.Since(t.start)),
 	)
 
-	return t.tx.Commit()
+	return err
 }
 
 // Rollback rollbacks tx
 func (t *Tx) Rollback() error {
-	defer t.logger.Info("begin tx",
+	err := t.tx.Rollback()
+
+	t.logger.Debug("begin tx",
 		zap.String("id", t.id),
 		zap.Duration("duration", time.Since(t.start)),
 	)
 
-	return t.tx.Rollback()
+	return err
 }

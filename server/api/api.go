@@ -64,7 +64,7 @@ func FromContext(ctx context.Context) *Api {
 func newWeb(ctx context.Context) *Api {
 	w := &Api{
 		config: config.FromContext(ctx).Web,
-		logger: logger.FromContext(ctx),
+		logger: logger.FromContext(ctx).Prefix("api"),
 		db:     dao.FromContext(ctx),
 
 		links: links.FromContext(ctx),
@@ -105,8 +105,8 @@ func (a *Api) Serve() {
 }
 
 func (a *Api) initHandler(appCtx context.Context) {
-	start := time.Now()
 	a.handler = func(requestCtx *fasthttp.RequestCtx) {
+		start := time.Now()
 
 		switch {
 		case requestCtx.IsGet():

@@ -16,6 +16,8 @@ type loggerCtxKey string
 // Logger is a logger service
 type Logger struct {
 	*zap.Logger
+
+	prefix string
 }
 
 // NewContext stores logger in context
@@ -47,5 +49,13 @@ func newLogger() *Logger {
 	}
 
 	logger.Info("logger created")
-	return &Logger{logger}
+	return &Logger{
+		Logger: logger,
+	}
+}
+
+func (l *Logger) Prefix(prefix string) *Logger {
+	l.prefix = prefix
+
+	return l
 }

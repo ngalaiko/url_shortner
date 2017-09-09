@@ -13,5 +13,7 @@ func NewTestLogger() *Logger {
 		log.Panicf("error while init logger: %s ", err)
 	}
 
-	return &Logger{l}
+	return &Logger{
+		Logger: l,
+	}
 }
