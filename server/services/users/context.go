@@ -3,10 +3,10 @@ package users
 import "context"
 
 const (
-	ctxKey linksCtxKey = "links_ctx_key"
+	ctxKey usersCtxKey = "users_ctx_key"
 )
 
-type linksCtxKey string
+type usersCtxKey string
 
 // NewContext places links to context
 func NewContext(ctx context.Context, links interface{}) context.Context {
