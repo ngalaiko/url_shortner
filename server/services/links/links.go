@@ -3,13 +3,13 @@ package links
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/url"
 	"strings"
 	"time"
 
 	"go.uber.org/zap"
 
+	"github.com/ngalayko/url_shortner/server/dao"
 	"github.com/ngalayko/url_shortner/server/dao/tables"
 	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/logger"
@@ -105,20 +105,36 @@ func prepareLink(link *schema.Link) error {
 // QueryLinkByShortUrl returns link by short url
 func (l *Links) QueryLinkByShortUrl(shortUrl string) (*schema.Link, error) {
 
-	link, err := l.tables.GetLinkByFields(map[string]interface{}{"short_url": shortUrl})
+	link, err := l.tables.GetLinkByFields(dao.NewParam(1).Add("short_url", shortUrl))
 	if err != nil {
 		return nil, err
 	}
 
-	if link.ExpiredAt.Before(time.Now()) {
-		return link, fmt.Errorf("Link has expired at %s", link.ExpiredAt)
-	}
-
-	if link.DeletedAt != nil {
+	if !link.Valid() {
 		return nil, sql.ErrNoRows
 	}
 
 	l.viewsQueue <- link.ID
 
 	return link, nil
+}
+
+// QueryLinkByShortUrl returns link by short url
+func (l *Links) QueryLinksByUser(userID uint64) ([]*schema.Link, error) {
+
+	ll, err := l.tables.SelectLinksByFields(dao.NewParams(1).Append(dao.NewParam(1).Add("user_id", userID)))
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*schema.Link, 0, len(ll))
+	for _, link := range ll {
+		if !link.Valid() {
+			continue
+		}
+
+		result = append(result, link)
+	}
+
+	return result, nil
 }

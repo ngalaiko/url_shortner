@@ -14,18 +14,42 @@ import (
 
 // GetUserById returns User from db or cache
 func (t *Tables) GetUserById(id uint64) (*schema.User, error) {
-	return t.GetUserByFields(map[string]interface{}{"id": id})
+	return t.GetUserByFields(dao.NewParam(1).Add("id", id))
 }
 
 // GetUserByFields returns Users from db or cache
-func (t *Tables) GetUserByFields(fields map[string]interface{}) (*schema.User, error) {
+func (t *Tables) GetUserByFields(field dao.Param) (*schema.User, error) {
+	fields := dao.NewParams(1).Append(field)
 
-	if len(fields) == 0 {
+	uu, err := t.SelectUsersByFields(fields)
+	if err != nil {
+		return nil, err
+	}
+
+	return uu[0], nil
+}
+
+// SelectUsersByFields select many users by fields
+func (t *Tables) SelectUsersByFields(fields dao.Params) ([]*schema.User, error) {
+
+	if fields.Len() == 0 {
 		return nil, nil
 	}
 
-	if value, ok := t.cache.Load(t.usersCacheKey(fields)); ok {
-		return value.(*schema.User), nil
+	result := make([]*schema.User, 0, fields.Len())
+	missedFields := dao.NewParams(fields.Len())
+	for _, f := range fields {
+
+		if value, ok := t.cache.Load(t.usersCacheKey(f["id"])); ok {
+			result = append(result, value.(*schema.User))
+			continue
+		}
+
+		missedFields = append(missedFields, f)
+	}
+
+	if missedFields.Len() == 0 {
+		return result, nil
 	}
 
 	b := bytes.Buffer{}
@@ -34,25 +58,41 @@ func (t *Tables) GetUserByFields(fields map[string]interface{}) (*schema.User, e
 		"WHERE ")
 
 	i := 1
-	values := []interface{}{}
-	for k, v := range fields {
-		values = append(values, v)
+	values := make([]interface{}, 0, missedFields.Len())
+	for fi, missedF := range missedFields {
 
-		if i > 1 {
-			b.WriteString(" AND \n")
+		if fi > 0 {
+			b.WriteString(" OR ")
 		}
 
-		b.WriteString(fmt.Sprintf("%s = $%d", k, i))
+		b.WriteRune('(')
+		j := 0
+		for key, value := range missedF {
+			values = append(values, value)
+
+			if j > 0 {
+				b.WriteString(" AND ")
+			}
+
+			b.WriteString(fmt.Sprintf("%s = $%d", key, i))
+
+			i++
+			j++
+		}
+		b.WriteRune(')')
 	}
 
-	u := &schema.User{}
-	if err := t.db.Get(u, b.String(), values...); err != nil {
+	uu := make([]*schema.User, 0, missedFields.Len())
+	if err := t.db.Select(&uu, b.String(), values...); err != nil {
 		return nil, err
 	}
 
-	t.cache.Store(t.usersCacheKey(fields), u)
-	t.cache.Store(t.usersCacheKey(map[string]interface{}{"id": u.ID}), u)
-	return u, nil
+	for _, u := range uu {
+		t.cache.Store(t.usersCacheKey(u.ID), u)
+		result = append(result, u)
+	}
+
+	return result, nil
 }
 
 // InsertUser inserts User in db and cache
@@ -74,7 +114,7 @@ func (t *Tables) InsertUser(u *schema.User) error {
 		t.logger.Info("User created",
 			zap.Reflect("$.Name", u),
 		)
-		t.cache.Store(t.usersCacheKey(map[string]interface{}{"id": u.ID}), u)
+		t.cache.Store(t.usersCacheKey(u.ID), u)
 		return nil
 	})
 }
@@ -99,18 +139,16 @@ func (t *Tables) UpdateUser(u *schema.User) error {
 		t.logger.Info("User updated",
 			zap.Reflect("$.Name", u),
 		)
-		t.cache.Store(t.usersCacheKey(map[string]interface{}{"id": u.ID}), u)
+		t.cache.Store(t.usersCacheKey(u.ID), u)
 		return nil
 	})
 }
 
-func (t *Tables) usersCacheKey(fields map[string]interface{}) string {
+func (t *Tables) usersCacheKey(id interface{}) string {
 	b := bytes.Buffer{}
 	b.WriteString("user")
 
-	for k, v := range fields {
-		b.WriteString(fmt.Sprintf("_%s=%v", k, v))
-	}
+	b.WriteString(fmt.Sprintf("_id=%v", id))
 
 	return b.String()
 }

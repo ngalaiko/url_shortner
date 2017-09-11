@@ -7,7 +7,6 @@ import (
 	_ "net/http/pprof"
 	"time"
 
-	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 
@@ -139,7 +138,7 @@ func (a *Api) responseErr(ctx *fasthttp.RequestCtx, err error) {
 }
 
 func (a *Api) responseData(ctx *fasthttp.RequestCtx, obj interface{}) {
-	data, err := easyjson.Marshal(obj.(easyjson.Marshaler))
+	data, err := json.Marshal(obj)
 	if err != nil {
 		a.responseErr(ctx, err)
 	}

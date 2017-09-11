@@ -12,15 +12,32 @@ import (
 )
 
 var (
-	usersRegEx = regexp.MustCompile(`/users/(\d+)`)
+	usersRegEx     = regexp.MustCompile(`/users/(\d+)`)
+	userLinksRegEx = regexp.MustCompile(`/users/(\d+)/links`)
 )
 
 func (a *Api) getHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCtx) {
 
 	requestUrl := string(requestCtx.RequestURI())
 	switch {
+
+	case userLinksRegEx.MatchString(requestUrl):
+		id, err := parseUserID(requestUrl)
+		if err != nil {
+			a.responseErr(requestCtx, err)
+			return
+		}
+
+		a.queryUserLinks(requestCtx, id)
+
 	case usersRegEx.MatchString(requestUrl):
-		a.queryUser(requestCtx, strings.Split(requestUrl, "/")[2])
+		id, err := parseUserID(requestUrl)
+		if err != nil {
+			a.responseErr(requestCtx, err)
+			return
+		}
+
+		a.queryUser(requestCtx, id)
 
 	default:
 		a.queryLink(requestCtx)
@@ -49,15 +66,9 @@ func (a *Api) queryLink(ctx *fasthttp.RequestCtx) {
 	ctx.Redirect(link.URL, http.StatusFound)
 }
 
-func (a *Api) queryUser(ctx *fasthttp.RequestCtx, id string) {
+func (a *Api) queryUser(ctx *fasthttp.RequestCtx, id uint64) {
 
-	intID, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		a.responseErr(ctx, err)
-		return
-	}
-
-	user, err := a.users.QueryUserById(uint64(intID))
+	user, err := a.users.QueryUserById(id)
 	switch {
 	case err == sql.ErrNoRows:
 		ctx.NotFound()
@@ -68,4 +79,26 @@ func (a *Api) queryUser(ctx *fasthttp.RequestCtx, id string) {
 	}
 
 	a.responseData(ctx, user)
+}
+
+func (a *Api) queryUserLinks(ctx *fasthttp.RequestCtx, userID uint64) {
+
+	links, err := a.links.QueryLinksByUser(userID)
+	if err != nil {
+		a.responseErr(ctx, err)
+		return
+	}
+
+	a.responseData(ctx, links)
+}
+
+func parseUserID(requestURL string) (uint64, error) {
+	id := strings.Split(requestURL, "/")[2]
+
+	intID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return 0, nil
+	}
+
+	return uint64(intID), nil
 }

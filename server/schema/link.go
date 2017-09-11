@@ -16,3 +16,15 @@ type Link struct {
 	CreatedAt time.Time  `json:"created_at" db:"created_at"`
 	DeletedAt *time.Time `json:"deleted_at" db:"deleted_at"`
 }
+
+// Valid returns true if link is valid
+func (l *Link) Valid() bool {
+	switch {
+	case l.ExpiredAt.Before(time.Now()):
+		return false
+	case l.DeletedAt != nil:
+		return false
+	default:
+		return true
+	}
+}

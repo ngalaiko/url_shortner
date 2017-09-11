@@ -101,18 +101,42 @@ import (
 
 // Get{{ $.Name }}ById returns {{ $.Name }} from db or cache
 func (t *Tables) Get{{ $.Name }}ById(id uint64) (*schema.{{ $.Name }}, error) {
-	return t.Get{{ $.Name }}ByFields(map[string]interface{}{"id": id})
+	return t.Get{{ $.Name }}ByFields(dao.NewParam(1).Add("id", id))
 }
 
 // Get{{ $.Name }}ByFields returns {{ $.Name }}s from db or cache
-func (t *Tables) Get{{ $.Name }}ByFields(fields map[string]interface{}) (*schema.{{ $.Name }}, error) {
+func (t *Tables) Get{{ $.Name }}ByFields(field dao.Param) (*schema.{{ $.Name }}, error) {
+	fields := dao.NewParams(1).Append(field)
 
-	if len(fields) == 0 {
+	{{ alias $.Name}}{{ alias $.Name}}, err := t.Select{{ $.Name }}sByFields(fields)
+	if err != nil {
+		return nil, err
+	}
+
+	return {{ alias $.Name}}{{ alias $.Name}}[0], nil
+}
+
+// Select{{ $.Name }}sByFields select many {{ $.TableName }} by fields
+func (t *Tables) Select{{ $.Name }}sByFields(fields dao.Params) ([]*schema.{{ $.Name }}, error) {
+
+	if fields.Len() == 0 {
 		return nil, nil
 	}
 
-	if value, ok := t.cache.Load(t.{{ $.TableName }}CacheKey(fields)); ok {
-		return value.(*schema.{{ $.Name }}), nil
+	result := make([]*schema.{{ $.Name }}, 0, fields.Len())
+	missedFields := dao.NewParams(fields.Len())
+	for _, f := range fields {
+
+		if value, ok := t.cache.Load(t.{{ $.TableName }}CacheKey(f["id"])); ok {
+			result = append(result, value.(*schema.{{ $.Name }}))
+			continue
+		}
+
+		missedFields = append(missedFields, f)
+	}
+
+	if missedFields.Len() == 0 {
+		return result, nil
 	}
 
 	b := bytes.Buffer{}
@@ -121,25 +145,41 @@ func (t *Tables) Get{{ $.Name }}ByFields(fields map[string]interface{}) (*schema
 		"WHERE ")
 
 	i := 1
-	values := []interface{}{}
-	for k, v := range fields {
-		values = append(values, v)
+	values := make([]interface{}, 0, missedFields.Len())
+	for fi, missedF := range missedFields {
 
-		if i > 1 {
-			b.WriteString(" AND \n")
+		if fi > 0 {
+			b.WriteString(" OR ")
 		}
 
-		b.WriteString(fmt.Sprintf("%s = $%d", k, i))
+		b.WriteRune('(')
+		j := 0
+		for key, value := range missedF {
+			values = append(values, value)
+
+			if j > 0 {
+				b.WriteString(" AND ")
+			}
+
+			b.WriteString(fmt.Sprintf("%s = $%d", key, i))
+
+			i++
+			j++
+		}
+		b.WriteRune(')')
 	}
 
-	{{ alias $.Name }} := &schema.{{ $.Name }}{}
-	if err := t.db.Get({{ alias $.Name }}, b.String(), values...); err != nil {
+	{{ alias $.Name }}{{ alias $.Name }} := make([]*schema.{{ $.Name }}, 0, missedFields.Len())
+	if err := t.db.Select(&{{ alias $.Name }}{{ alias $.Name }}, b.String(), values...); err != nil {
 		return nil, err
 	}
 
-	t.cache.Store(t.{{ $.TableName }}CacheKey(fields), {{ alias $.Name }})
-	t.cache.Store(t.{{ $.TableName }}CacheKey(map[string]interface{}{"id": {{ alias $.Name }}.ID}), {{ alias $.Name }})
-	return {{ alias $.Name }}, nil
+	for _, {{ alias $.Name }} := range {{ alias $.Name }}{{ alias $.Name }} {
+		t.cache.Store(t.{{ $.TableName }}CacheKey({{ alias $.Name }}.ID), {{ alias $.Name }})
+		result = append(result, {{ alias $.Name }})
+	}
+
+	return result, nil
 }
 
 // Insert{{ $.Name }} inserts {{ $.Name }} in db and cache
@@ -161,7 +201,7 @@ func (t *Tables) Insert{{ $.Name }}({{ alias $.Name }} *schema.{{ $.Name }}) err
 		t.logger.Info("{{ $.Name }} created",
 			zap.Reflect("$.Name", {{ alias $.Name }}),
 		)
-		t.cache.Store(t.{{ $.TableName }}CacheKey(map[string]interface{}{"id": {{ alias $.Name }}.ID}), {{ alias $.Name }})
+		t.cache.Store(t.{{ $.TableName }}CacheKey({{ alias $.Name }}.ID), {{ alias $.Name }})
 		return nil
 	})
 }
@@ -184,18 +224,16 @@ func (t *Tables) Update{{ $.Name }}({{ alias $.Name }} *schema.{{ $.Name }}) err
 		t.logger.Info("{{ $.Name }} updated",
 			zap.Reflect("$.Name", {{ alias $.Name }}),
 		)
-		t.cache.Store(t.{{ $.TableName }}CacheKey(map[string]interface{}{"id": {{ alias $.Name }}.ID}), {{ alias $.Name }})
+		t.cache.Store(t.{{ $.TableName }}CacheKey({{ alias $.Name }}.ID), {{ alias $.Name }})
 		return nil
 	})
 }
 
-func (t *Tables) {{ $.TableName }}CacheKey(fields map[string]interface{}) string {
+func (t *Tables) {{ $.TableName }}CacheKey(id interface{}) string {
 	b := bytes.Buffer{}
 	b.WriteString("{{ underscore $.Name }}")
 
-	for k, v := range fields {
-		b.WriteString(fmt.Sprintf("_%s=%v", k, v))
-	}
+	b.WriteString(fmt.Sprintf("_id=%v", id))
 
 	return b.String()
 }

@@ -2,8 +2,8 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 
-	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
 
 	"github.com/ngalayko/url_shortner/server/schema"
@@ -21,7 +21,7 @@ func (a *Api) postHandlers(appCtx context.Context, requestCtx *fasthttp.RequestC
 
 func (a *Api) createLink(ctx *fasthttp.RequestCtx) {
 	link := &schema.Link{}
-	if err := easyjson.Unmarshal(ctx.PostBody(), link); err != nil {
+	if err := json.Unmarshal(ctx.PostBody(), link); err != nil {
 		a.responseErr(ctx, err)
 		return
 	}

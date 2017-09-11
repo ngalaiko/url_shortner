@@ -14,18 +14,42 @@ import (
 
 // GetLinkById returns Link from db or cache
 func (t *Tables) GetLinkById(id uint64) (*schema.Link, error) {
-	return t.GetLinkByFields(map[string]interface{}{"id": id})
+	return t.GetLinkByFields(dao.NewParam(1).Add("id", id))
 }
 
 // GetLinkByFields returns Links from db or cache
-func (t *Tables) GetLinkByFields(fields map[string]interface{}) (*schema.Link, error) {
+func (t *Tables) GetLinkByFields(field dao.Param) (*schema.Link, error) {
+	fields := dao.NewParams(1).Append(field)
 
-	if len(fields) == 0 {
+	ll, err := t.SelectLinksByFields(fields)
+	if err != nil {
+		return nil, err
+	}
+
+	return ll[0], nil
+}
+
+// SelectLinksByFields select many links by fields
+func (t *Tables) SelectLinksByFields(fields dao.Params) ([]*schema.Link, error) {
+
+	if fields.Len() == 0 {
 		return nil, nil
 	}
 
-	if value, ok := t.cache.Load(t.linksCacheKey(fields)); ok {
-		return value.(*schema.Link), nil
+	result := make([]*schema.Link, 0, fields.Len())
+	missedFields := dao.NewParams(fields.Len())
+	for _, f := range fields {
+
+		if value, ok := t.cache.Load(t.linksCacheKey(f["id"])); ok {
+			result = append(result, value.(*schema.Link))
+			continue
+		}
+
+		missedFields = append(missedFields, f)
+	}
+
+	if missedFields.Len() == 0 {
+		return result, nil
 	}
 
 	b := bytes.Buffer{}
@@ -34,25 +58,41 @@ func (t *Tables) GetLinkByFields(fields map[string]interface{}) (*schema.Link, e
 		"WHERE ")
 
 	i := 1
-	values := []interface{}{}
-	for k, v := range fields {
-		values = append(values, v)
+	values := make([]interface{}, 0, missedFields.Len())
+	for fi, missedF := range missedFields {
 
-		if i > 1 {
-			b.WriteString(" AND \n")
+		if fi > 0 {
+			b.WriteString(" OR ")
 		}
 
-		b.WriteString(fmt.Sprintf("%s = $%d", k, i))
+		b.WriteRune('(')
+		j := 0
+		for key, value := range missedF {
+			values = append(values, value)
+
+			if j > 0 {
+				b.WriteString(" AND ")
+			}
+
+			b.WriteString(fmt.Sprintf("%s = $%d", key, i))
+
+			i++
+			j++
+		}
+		b.WriteRune(')')
 	}
 
-	l := &schema.Link{}
-	if err := t.db.Get(l, b.String(), values...); err != nil {
+	ll := make([]*schema.Link, 0, missedFields.Len())
+	if err := t.db.Select(&ll, b.String(), values...); err != nil {
 		return nil, err
 	}
 
-	t.cache.Store(t.linksCacheKey(fields), l)
-	t.cache.Store(t.linksCacheKey(map[string]interface{}{"id": l.ID}), l)
-	return l, nil
+	for _, l := range ll {
+		t.cache.Store(t.linksCacheKey(l.ID), l)
+		result = append(result, l)
+	}
+
+	return result, nil
 }
 
 // InsertLink inserts Link in db and cache
@@ -74,7 +114,7 @@ func (t *Tables) InsertLink(l *schema.Link) error {
 		t.logger.Info("Link created",
 			zap.Reflect("$.Name", l),
 		)
-		t.cache.Store(t.linksCacheKey(map[string]interface{}{"id": l.ID}), l)
+		t.cache.Store(t.linksCacheKey(l.ID), l)
 		return nil
 	})
 }
@@ -102,18 +142,16 @@ func (t *Tables) UpdateLink(l *schema.Link) error {
 		t.logger.Info("Link updated",
 			zap.Reflect("$.Name", l),
 		)
-		t.cache.Store(t.linksCacheKey(map[string]interface{}{"id": l.ID}), l)
+		t.cache.Store(t.linksCacheKey(l.ID), l)
 		return nil
 	})
 }
 
-func (t *Tables) linksCacheKey(fields map[string]interface{}) string {
+func (t *Tables) linksCacheKey(id interface{}) string {
 	b := bytes.Buffer{}
 	b.WriteString("link")
 
-	for k, v := range fields {
-		b.WriteString(fmt.Sprintf("_%s=%v", k, v))
-	}
+	b.WriteString(fmt.Sprintf("_id=%v", id))
 
 	return b.String()
 }
