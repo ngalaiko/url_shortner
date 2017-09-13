@@ -17,7 +17,8 @@ import (
 
 // Application is an application main object
 type Application struct {
-	ctx context.Context
+	ctx        context.Context
+	cancelFunc context.CancelFunc
 
 	logger *logger.Logger
 }
@@ -39,15 +40,18 @@ var (
 // NewApplication creates new application
 func NewApplication() *Application {
 
-	app := &Application{
-		ctx: context.Background(),
-	}
+	ctx, cancelFunc := context.WithCancel(context.Background())
 
-	app.logger = logger.FromContext(app.ctx).Prefix("applicaiton")
+	app := &Application{
+		ctx:        ctx,
+		cancelFunc: cancelFunc,
+	}
 
 	for _, service := range services {
 		app.ctx = service(app.ctx, nil)
 	}
+
+	app.logger = logger.FromContext(app.ctx).Prefix("applicaiton")
 
 	if err := migrate.FromContext(app.ctx).Apply(); err != nil {
 		app.logger.Panic("error while migrations",
