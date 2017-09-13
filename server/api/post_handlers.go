@@ -12,7 +12,7 @@ import (
 func (a *Api) postHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCtx) {
 
 	switch string(requestCtx.RequestURI()) {
-	case "/create_link":
+	case "/link":
 		a.createLink(requestCtx)
 	default:
 		requestCtx.NotFound()
