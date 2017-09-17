@@ -1,9 +1,2 @@
-Db:
-  Driver: "postgres"
-  Connect: "host=postgres user=url_short dbname=url_short sslmode=disable password=secret"
-  MaxIdleConns: 5
-  MaxOpenConns: 10
-
 Web:
-  Address: "0.0.0.0:8080"
-  PprofAddress: "0.0.0.0:8090"
+  Address: "0.0.0.0:8070"

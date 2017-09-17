@@ -1,2 +1,4 @@
 server/vendor
 .idea
+/client/template/data.go
+/client/vendor/

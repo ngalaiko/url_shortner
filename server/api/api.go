@@ -45,7 +45,7 @@ func NewContext(ctx context.Context, web interface{}) context.Context {
 	}
 
 	if _, ok := web.(*Api); !ok {
-		web = newWeb(ctx)
+		web = newApi(ctx)
 	}
 
 	return context.WithValue(ctx, ctxKey, web)
@@ -57,10 +57,10 @@ func FromContext(ctx context.Context) *Api {
 		return web
 	}
 
-	return newWeb(ctx)
+	return newApi(ctx)
 }
 
-func newWeb(ctx context.Context) *Api {
+func newApi(ctx context.Context) *Api {
 	w := &Api{
 		config: config.FromContext(ctx).Web,
 		logger: logger.FromContext(ctx).Prefix("api"),
