@@ -23,8 +23,10 @@ const (
 
 type apiCtxKey string
 
-type errResponse struct {
-	Err string `json:"err"`
+type response struct {
+	Ok   bool        `json:"ok"`
+	Data interface{} `json:"data"`
+	Err  string      `json:"err"`
 }
 
 // Api is a web service
@@ -129,7 +131,8 @@ func (a *Api) responseErr(ctx *fasthttp.RequestCtx, err error) {
 	ctx.Response.SetStatusCode(http.StatusBadRequest)
 	ctx.Response.Header.Set("Content-Type", "application/json")
 
-	data, err := json.Marshal(errResponse{
+	data, err := json.Marshal(response{
+		Ok:  false,
 		Err: err.Error(),
 	})
 	if err != nil {
@@ -143,7 +146,10 @@ func (a *Api) responseData(ctx *fasthttp.RequestCtx, obj interface{}) {
 	ctx.Response.SetStatusCode(http.StatusOK)
 	ctx.Response.Header.Set("Content-Type", "application/json")
 
-	data, err := json.Marshal(obj)
+	data, err := json.Marshal(response{
+		Ok:   true,
+		Data: obj,
+	})
 	if err != nil {
 		a.responseErr(ctx, err)
 	}

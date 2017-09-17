@@ -7,15 +7,18 @@ import (
 
 const (
 	dataPath = "template/data/"
-	header   = "header.html"
-	footer   = "footer.html"
+	index    = "index.html"
+	header   = "common/header.html"
+	footer   = "common/footer.html"
 
 	defaultName = "Url shorter"
 )
 
 var (
-	indexTemplate = template.Must(template.New("index").
-		Parse(string(MustAsset(dataPath+header)) + string(MustAsset(dataPath+footer))))
+	indexTemplate = template.Must(template.New("index").Parse(
+		string(MustAsset(dataPath+header)) +
+			string(MustAsset(dataPath+index)) +
+			string(MustAsset(dataPath+footer))))
 )
 
 type data struct {
