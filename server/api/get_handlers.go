@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/valyala/fasthttp"
+
+	"github.com/ngalayko/url_shortner/server/template"
 )
 
 var (
@@ -20,6 +22,8 @@ func (a *Api) getHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCt
 
 	requestUrl := string(requestCtx.RequestURI())
 	switch {
+	case requestUrl == "/":
+		a.renderMainPage(requestCtx)
 
 	case userLinksRegEx.MatchString(requestUrl):
 		id, err := parseUserID(requestUrl)
@@ -43,6 +47,16 @@ func (a *Api) getHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCt
 		a.queryLink(requestCtx)
 
 	}
+}
+
+func (a *Api) renderMainPage(ctx *fasthttp.RequestCtx) {
+	data, err := template.Index()
+	if err != nil {
+		a.responseErr(ctx, err)
+		return
+	}
+
+	a.responseHtml(ctx, data)
 }
 
 func (a *Api) queryLink(ctx *fasthttp.RequestCtx) {

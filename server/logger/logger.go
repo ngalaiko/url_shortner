@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -13,9 +14,16 @@ const (
 
 type loggerCtxKey string
 
+type ILogger interface {
+	Info(string, ...zapcore.Field)
+	Error(string, ...zapcore.Field)
+	Debug(string, ...zapcore.Field)
+	Panic(string, ...zapcore.Field)
+}
+
 // Logger is a logger service
 type Logger struct {
-	*zap.Logger
+	logger *zap.Logger
 
 	prefix string
 }
@@ -50,10 +58,47 @@ func newLogger() *Logger {
 
 	logger.Info("logger created")
 	return &Logger{
-		Logger: logger,
+		logger: logger,
 	}
 }
 
+// Info is info level log
+func (l *Logger) Info(msg string, fields ...zapcore.Field) {
+	if l.prefix != "" {
+		fields = append(fields, zap.String("prefix", l.prefix))
+	}
+
+	l.logger.Info(msg, fields...)
+}
+
+// Error is a error level log
+func (l *Logger) Error(msg string, fields ...zapcore.Field) {
+	if l.prefix != "" {
+		fields = append(fields, zap.String("prefix", l.prefix))
+	}
+
+	l.logger.Error(msg, fields...)
+}
+
+// Debug is a debug level log
+func (l *Logger) Debug(msg string, fields ...zapcore.Field) {
+	if l.prefix != "" {
+		fields = append(fields, zap.String("prefix", l.prefix))
+	}
+
+	l.logger.Debug(msg, fields...)
+}
+
+// Panic is a panic level log
+func (l *Logger) Panic(msg string, fields ...zapcore.Field) {
+	if l.prefix != "" {
+		fields = append(fields, zap.String("prefix", l.prefix))
+	}
+
+	l.logger.Panic(msg, fields...)
+}
+
+// Prefix sets logger prefix
 func (l *Logger) Prefix(prefix string) *Logger {
 	l.prefix = prefix
 

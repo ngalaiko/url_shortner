@@ -19,7 +19,7 @@ type migrationsCtxKey string
 type Migrate struct {
 	Db *dao.Db
 
-	logger *logger.Logger
+	logger logger.ILogger
 }
 
 // NewContext stores Migrate in context

@@ -18,7 +18,7 @@ type tablesCtxKey string
 type Tables struct {
 	db     *dao.Db
 	cache  cache.ICache
-	logger *logger.Logger
+	logger logger.ILogger
 }
 
 // NewContext stores Tables in context

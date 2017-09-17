@@ -3,6 +3,7 @@ all: deps generate build
 
 generate:
 	go generate ./generate/...
+	go-bindata -o ./template/data.go -pkg template ./template/data/...
 
 build: generate
 	env GOGC=off go build -o ./bin/url_shortner ./cmd/main.go

@@ -20,7 +20,7 @@ type Application struct {
 	ctx        context.Context
 	cancelFunc context.CancelFunc
 
-	logger *logger.Logger
+	logger logger.ILogger
 }
 
 type newServiceFunc func(context.Context, interface{}) context.Context

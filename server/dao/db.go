@@ -23,7 +23,7 @@ type dbCtxKey string
 // Db is a database service
 type Db struct {
 	*sqlx.DB
-	logger *logger.Logger
+	logger logger.ILogger
 	config config.DbConfig
 }
 
@@ -63,7 +63,7 @@ func newDb(ctx context.Context) *Db {
 	return db
 }
 
-func newDbHelper(cfg config.DbConfig, l *logger.Logger) *Db {
+func newDbHelper(cfg config.DbConfig, l logger.ILogger) *Db {
 
 	db, err := sqlx.Open(cfg.Driver, cfg.Connect)
 	if err != nil {

@@ -2,13 +2,12 @@ package cache
 
 import (
 	"context"
+	"time"
 
 	"golang.org/x/sync/syncmap"
 
-	"fmt"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"go.uber.org/zap"
-	"time"
 )
 
 const (
@@ -25,7 +24,7 @@ type ICache interface {
 
 // Cache is a cache service
 type Cache struct {
-	logger *logger.Logger
+	logger logger.ILogger
 
 	cacheMap *syncmap.Map
 }
@@ -46,7 +45,6 @@ func NewContext(ctx context.Context, cache interface{}) context.Context {
 // FromContext returns cache from context
 func FromContext(ctx context.Context) ICache {
 	if cache, ok := ctx.Value(ctxKey).(ICache); ok {
-		fmt.Printf("from context cache")
 		return cache
 	}
 

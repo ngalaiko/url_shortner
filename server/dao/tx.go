@@ -14,7 +14,7 @@ import (
 // Tx is a tx wrapper over sqlx.Tx
 type Tx struct {
 	db     *sqlx.DB
-	logger *logger.Logger
+	logger logger.ILogger
 
 	tx *sqlx.Tx
 	id string

@@ -24,7 +24,7 @@ const (
 
 // Links is a links service
 type Links struct {
-	logger *logger.Logger
+	logger logger.ILogger
 	tables *tables.Tables
 
 	//channel of link ids to increment views of

@@ -7,13 +7,11 @@ import (
 )
 
 // NewTestLogger returns debug level logger
-func NewTestLogger() *Logger {
+func NewTestLogger() ILogger {
 	l, err := zap.NewDevelopment()
 	if err != nil {
 		log.Panicf("error while init logger: %s ", err)
 	}
 
-	return &Logger{
-		Logger: l,
-	}
+	return l
 }

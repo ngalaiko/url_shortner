@@ -1,11 +1,5 @@
 version: '3'
 services:
-  client:
-    build: ./client
-    depends_on:
-      - server
-    ports:
-      - "8070:8070"
   server:
     build: ./server
     depends_on:

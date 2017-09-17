@@ -31,7 +31,7 @@ type errResponse struct {
 type Api struct {
 	handler fasthttp.RequestHandler
 	config  config.WebConfig
-	logger  *logger.Logger
+	logger  logger.ILogger
 	db      *dao.Db
 
 	links *links.Links
@@ -126,6 +126,9 @@ func (a *Api) initHandler(appCtx context.Context) {
 }
 
 func (a *Api) responseErr(ctx *fasthttp.RequestCtx, err error) {
+	ctx.Response.SetStatusCode(http.StatusBadRequest)
+	ctx.Response.Header.Set("Content-Type", "application/json")
+
 	data, err := json.Marshal(errResponse{
 		Err: err.Error(),
 	})
@@ -133,16 +136,27 @@ func (a *Api) responseErr(ctx *fasthttp.RequestCtx, err error) {
 		a.responseErr(ctx, err)
 	}
 
-	ctx.Response.SetStatusCode(http.StatusInternalServerError)
-	ctx.Response.AppendBody(data)
+	a.responseBytes(ctx, data)
 }
 
 func (a *Api) responseData(ctx *fasthttp.RequestCtx, obj interface{}) {
+	ctx.Response.SetStatusCode(http.StatusOK)
+	ctx.Response.Header.Set("Content-Type", "application/json")
+
 	data, err := json.Marshal(obj)
 	if err != nil {
 		a.responseErr(ctx, err)
 	}
 
-	ctx.Response.SetStatusCode(http.StatusOK)
+	a.responseBytes(ctx, data)
+}
+
+func (a *Api) responseHtml(ctx *fasthttp.RequestCtx, data []byte) {
+	ctx.Response.Header.Set("Content-Type", "text/html")
+
+	a.responseBytes(ctx, data)
+}
+
+func (a *Api) responseBytes(ctx *fasthttp.RequestCtx, data []byte) {
 	ctx.Response.AppendBody(data)
 }

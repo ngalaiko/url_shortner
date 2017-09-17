@@ -11,7 +11,7 @@ import (
 
 // Users is a users service
 type Users struct {
-	logger *logger.Logger
+	logger logger.ILogger
 	tables *tables.Tables
 }
 
