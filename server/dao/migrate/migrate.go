@@ -47,7 +47,7 @@ func FromContext(ctx context.Context) *Migrate {
 func newMigrate(ctx context.Context) *Migrate {
 	return &Migrate{
 		Db:     dao.FromContext(ctx),
-		logger: logger.FromContext(ctx).Prefix("migrate"),
+		logger: logger.FromContext(ctx),
 	}
 }
 

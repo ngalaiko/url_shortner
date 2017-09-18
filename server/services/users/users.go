@@ -17,7 +17,7 @@ type Users struct {
 
 func newUsers(ctx context.Context) *Users {
 	u := &Users{
-		logger: logger.FromContext(ctx).Prefix("users"),
+		logger: logger.FromContext(ctx),
 		tables: tables.FromContext(ctx),
 	}
 

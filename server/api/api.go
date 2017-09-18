@@ -65,7 +65,7 @@ func FromContext(ctx context.Context) *Api {
 func newApi(ctx context.Context) *Api {
 	w := &Api{
 		config: config.FromContext(ctx).Web,
-		logger: logger.FromContext(ctx).Prefix("api"),
+		logger: logger.FromContext(ctx),
 		db:     dao.FromContext(ctx),
 
 		links: links.FromContext(ctx),

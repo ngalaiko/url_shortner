@@ -33,7 +33,7 @@ type Links struct {
 
 func newLinks(ctx context.Context) *Links {
 	l := &Links{
-		logger: logger.FromContext(ctx).Prefix("links"),
+		logger: logger.FromContext(ctx),
 		tables: tables.FromContext(ctx),
 
 		viewsQueue: make(chan uint64),

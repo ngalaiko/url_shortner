@@ -47,6 +47,6 @@ func newTables(ctx context.Context) *Tables {
 	return &Tables{
 		db:     dao.FromContext(ctx),
 		cache:  cache.FromContext(ctx),
-		logger: logger.FromContext(ctx).Prefix("tables"),
+		logger: logger.FromContext(ctx),
 	}
 }

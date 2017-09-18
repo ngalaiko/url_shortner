@@ -45,14 +45,15 @@ func migrations() []*migration {
 			Name: "create links table",
 			RawSQL: `
 			CREATE TABLE links (
-				id         BIGSERIAL NOT NULL PRIMARY KEY,
-				user_id    BIGINT    NOT NULL REFERENCES users(id),
-				url        TEXT      NOT NULL,
-				short_url  TEXT      NOT NULL,
-				views      BIGINT    NOT NULL DEFAULT 0,
-				expired_at TIMESTAMP NOT NULL,
-				created_at TIMESTAMP NOT NULL,
-				deleted_at TIMESTAMP
+				id          BIGSERIAL NOT NULL PRIMARY KEY,
+				user_id     BIGINT    NOT NULL REFERENCES users(id),
+				url         TEXT      NOT NULL,
+				short_url   TEXT      NOT NULL,
+				views       BIGINT    NOT NULL DEFAULT 0,
+				views_limit BIGINT NOT NULL DEFAULT 0,
+				expired_at  TIMESTAMP NOT NULL,
+				created_at  TIMESTAMP NOT NULL,
+				deleted_at  TIMESTAMP
 			)
 			`,
 			FlushSQL: `DROP TABLE IF EXISTS links`,

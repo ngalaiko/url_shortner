@@ -24,8 +24,6 @@ type ILogger interface {
 // Logger is a logger service
 type Logger struct {
 	logger *zap.Logger
-
-	prefix string
 }
 
 // NewContext stores logger in context
@@ -64,43 +62,20 @@ func newLogger() *Logger {
 
 // Info is info level log
 func (l *Logger) Info(msg string, fields ...zapcore.Field) {
-	if l.prefix != "" {
-		fields = append(fields, zap.String("prefix", l.prefix))
-	}
-
 	l.logger.Info(msg, fields...)
 }
 
 // Error is a error level log
 func (l *Logger) Error(msg string, fields ...zapcore.Field) {
-	if l.prefix != "" {
-		fields = append(fields, zap.String("prefix", l.prefix))
-	}
-
 	l.logger.Error(msg, fields...)
 }
 
 // Debug is a debug level log
 func (l *Logger) Debug(msg string, fields ...zapcore.Field) {
-	if l.prefix != "" {
-		fields = append(fields, zap.String("prefix", l.prefix))
-	}
-
 	l.logger.Debug(msg, fields...)
 }
 
 // Panic is a panic level log
 func (l *Logger) Panic(msg string, fields ...zapcore.Field) {
-	if l.prefix != "" {
-		fields = append(fields, zap.String("prefix", l.prefix))
-	}
-
 	l.logger.Panic(msg, fields...)
-}
-
-// Prefix sets logger prefix
-func (l *Logger) Prefix(prefix string) *Logger {
-	l.prefix = prefix
-
-	return l
 }

@@ -53,7 +53,7 @@ func FromContext(ctx context.Context) ICache {
 
 func newCache(ctx context.Context) *Cache {
 	return &Cache{
-		logger:   logger.FromContext(ctx).Prefix("cache"),
+		logger:   logger.FromContext(ctx),
 		cacheMap: &syncmap.Map{},
 	}
 }

@@ -1,8 +1,40 @@
-<div class="container">
-    <div class="form-group mx-sm-3">
-        <label for="inputUrl" class="sr-only">Password</label>
-        <input class="form-control" id="inputUrl" placeholder="Enter URL">
-        <button class="btn btn-primary" onclick="getShortUrl();">Short it!</button>
-    </div>
-    <input id="shortUrl" class="form-control" readonly>
-</div>
+<html>
+<head>
+    <title>{{ $.Name }}</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script>
+        function getShortUrl() {
+            var payload = {
+                url: document.getElementById('inputUrl').value
+            };
+
+            fetch("/link",
+                {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                })
+                .then(function(res){ return res.json(); })
+                .then(showShortUrl)
+        }
+
+        function showShortUrl(data) {
+            if (!data.ok) {
+                alert(data.error);
+                return;
+            }
+            document.getElementById('shortUrl').value = location.hostname + '/' + data.data.short_url;
+        }
+
+    </script>
+</head>
+    <body>
+        <div class="container">
+            <div class="form-group mx-sm-3">
+                <label for="inputUrl" class="sr-only">Password</label>
+                <input class="form-control" id="inputUrl" placeholder="Enter URL">
+                <button class="btn btn-primary" onclick="getShortUrl();">Short it!</button>
+            </div>
+            <input id="shortUrl" class="form-control" readonly>
+        </div>
+    </body>
+</html>
