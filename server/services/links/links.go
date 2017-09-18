@@ -121,20 +121,5 @@ func (l *Links) QueryLinkByShortUrl(shortUrl string) (*schema.Link, error) {
 
 // QueryLinkByShortUrl returns link by short url
 func (l *Links) QueryLinksByUser(userID uint64) ([]*schema.Link, error) {
-
-	ll, err := l.tables.SelectLinksByFields(dao.NewParams(1).Append(dao.NewParam(1).Add("user_id", userID)))
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]*schema.Link, 0, len(ll))
-	for _, link := range ll {
-		if !link.Valid() {
-			continue
-		}
-
-		result = append(result, link)
-	}
-
-	return result, nil
+	return l.tables.SelectLinksByFields(dao.NewParams(1).Append(dao.NewParam(1).Add("user_id", userID)))
 }

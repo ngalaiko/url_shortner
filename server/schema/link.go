@@ -25,7 +25,7 @@ func (l *Link) Valid() bool {
 		return false
 	case l.DeletedAt != nil:
 		return false
-	case l.ViewsLimit > 0 && l.ViewsLimit >= l.Views:
+	case l.ViewsLimit > 0 && l.Views >= l.ViewsLimit:
 		return false
 	default:
 		return true
