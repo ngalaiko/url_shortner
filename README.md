@@ -1,4 +1,5 @@
 # Url Shortner
+[![Build Status](https://drone.galayko.rocks/api/badges/ngalayko/url_shortner/status.svg)](https://drone.galayko.rocks/ngalayko/url_shortner)
 
 # TODO:
 
