@@ -27,10 +27,47 @@
             document.getElementById('shortUrl').value = "https:" + link ;
         }
 
+        function checkLoginState() {
+            FB.getLoginStatus(function(response) {
+                statusChangeCallback(response);
+            });
+        }
+
+        function statusChangeCallback(response) {
+            console.log(response)
+        }
+
     </script>
 </head>
 <body>
+
+<script>
+    window.fbAsyncInit = function() {
+        FB.init({
+            appId      : '{{ $.FacebookAppID }}',
+            cookie     : true,
+            xfbml      : true,
+            version    : '{{  $.FacebookApiSDK  }}'
+        });
+        FB.AppEvents.logPageView();
+    };
+
+    (function(d, s, id){
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) {return;}
+        js = d.createElement(s); js.id = id;
+        js.src = "//connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+</script>
+
 <div class="container" style="width: 50%; top: 30%; position: relative;">
+
+    <fb:login-button
+            scope="public_profile,email"
+            onlogin="checkLoginState();">
+    </fb:login-button>
+
     <div class="form-group mx-sm-3">
         <label for="inputUrl" class="sr-only">Password</label>
         <input class="form-control" id="inputUrl" placeholder="Enter URL">

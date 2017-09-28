@@ -7,3 +7,7 @@ Db:
 Web:
   Address: "0.0.0.0:8080"
   PprofAddress: "0.0.0.0:8090"
+
+Facebook:
+  FacebookAppID: "244050466119725"
+  FacebookApiSDK: "v2.10"

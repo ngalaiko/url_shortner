@@ -100,13 +100,13 @@ func (t *Tables) InsertLink(l *schema.Link) error {
 	return t.db.Mutate(func(tx *dao.Tx) error {
 
 		insertSQL := "INSERT INTO links " +
-			"(user_id, url, short_url, views, expired_at, created_at, deleted_at) " +
+			"(user_id, url, short_url, views_limit, views, expired_at, created_at, deleted_at) " +
 			"VALUES " +
-			"($1, $2, $3, $4, $5, $6, $7) " +
+			"($1, $2, $3, $4, $5, $6, $7, $8) " +
 			"RETURNING id"
 
 		var id uint64
-		if err := tx.Get(&id, insertSQL, l.UserID, l.URL, l.ShortURL, l.Views, l.ExpiredAt, l.CreatedAt, l.DeletedAt); err != nil {
+		if err := tx.Get(&id, insertSQL, l.UserID, l.URL, l.ShortURL, l.ViewsLimit, l.Views, l.ExpiredAt, l.CreatedAt, l.DeletedAt); err != nil {
 			return err
 		}
 		l.ID = id
@@ -128,13 +128,14 @@ func (t *Tables) UpdateLink(l *schema.Link) error {
 			"user_id = $1, " +
 			"url = $2, " +
 			"short_url = $3, " +
-			"views = $4, " +
-			"expired_at = $5, " +
-			"created_at = $6, " +
-			"deleted_at = $7 " +
+			"views_limit = $4, " +
+			"views = $5, " +
+			"expired_at = $6, " +
+			"created_at = $7, " +
+			"deleted_at = $8 " +
 			fmt.Sprintf("WHERE id = %d", l.ID)
 
-		_, err := tx.Exec(updateSQL, l.UserID, l.URL, l.ShortURL, l.Views, l.ExpiredAt, l.CreatedAt, l.DeletedAt)
+		_, err := tx.Exec(updateSQL, l.UserID, l.URL, l.ShortURL, l.ViewsLimit, l.Views, l.ExpiredAt, l.CreatedAt, l.DeletedAt)
 		if err != nil {
 			return err
 		}

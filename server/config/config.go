@@ -22,6 +22,7 @@ type configCtxKey string
 type Config struct {
 	Db  DbConfig  `yaml:"Db"`
 	Web WebConfig `yaml:"Web"`
+	Facebook FacebookConfig `yaml:"Facebook"`
 }
 
 var (

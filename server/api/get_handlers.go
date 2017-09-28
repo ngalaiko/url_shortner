@@ -50,7 +50,9 @@ func (a *Api) getHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCt
 }
 
 func (a *Api) renderMainPage(ctx *fasthttp.RequestCtx) {
-	data, err := template.Index()
+	data, err := template.Index(
+		template.WithFacebookConfig(a.fbConfig),
+	)
 	if err != nil {
 		a.responseErr(ctx, err)
 		return

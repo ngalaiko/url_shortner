@@ -33,6 +33,7 @@ type response struct {
 type Api struct {
 	handler fasthttp.RequestHandler
 	config  config.WebConfig
+	fbConfig config.FacebookConfig
 	logger  logger.ILogger
 	db      *dao.Db
 
@@ -63,10 +64,13 @@ func FromContext(ctx context.Context) *Api {
 }
 
 func newApi(ctx context.Context) *Api {
+	cfg := config.FromContext(ctx)
+
 	w := &Api{
-		config: config.FromContext(ctx).Web,
-		logger: logger.FromContext(ctx),
-		db:     dao.FromContext(ctx),
+		config:   cfg.Web,
+		fbConfig: cfg.Facebook,
+		logger:   logger.FromContext(ctx),
+		db:       dao.FromContext(ctx),
 
 		links: links.FromContext(ctx),
 		users: users.FromContext(ctx),

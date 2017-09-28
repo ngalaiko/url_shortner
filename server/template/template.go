@@ -3,13 +3,12 @@ package template
 import (
 	"bytes"
 	"html/template"
+	"github.com/ngalayko/url_shortner/server/config"
 )
 
 const (
 	dataPath = "template/data/"
 	index    = "index.html"
-
-	defaultName = "Url shorter"
 )
 
 var (
@@ -17,7 +16,8 @@ var (
 )
 
 type data struct {
-	Name string
+	FacebookApiSDK string
+	FacebookAppID  string
 }
 
 // DataFunc is a func to modify template data
@@ -30,9 +30,7 @@ func Index(dataOps ...DataFunc) ([]byte, error) {
 		buffer bytes.Buffer
 	)
 
-	d := &data{
-		Name: defaultName,
-	}
+	d := &data{}
 
 	for _, option := range dataOps {
 		option(d)
@@ -45,9 +43,10 @@ func Index(dataOps ...DataFunc) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-// WithName sets template name
-func WithName(name string) DataFunc {
+// WithFacebookConfig sets template facebook config
+func WithFacebookConfig(cfg config.FacebookConfig) DataFunc {
 	return func(d *data) {
-		d.Name = name
+		d.FacebookApiSDK = cfg.FacebookApiSDK
+		d.FacebookAppID = cfg.FacebookAppID
 	}
 }

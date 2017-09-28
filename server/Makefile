@@ -5,7 +5,7 @@ generate:
 	go generate ./generate/...
 	go-bindata -o ./template/data.go -pkg template ./template/data/...
 
-build: deps generate
+build: 
 	env GOGC=off go build -o ./bin/url_shortner ./cmd/main.go
 
 build-alpine: deps generate

@@ -2,7 +2,6 @@ version: '3'
 services:
   server:
     build: ./server
-    image: docker.galayko.rocks/url_shortner_server
     depends_on:
       - postgres
     ports:
