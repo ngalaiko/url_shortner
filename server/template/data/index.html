@@ -1,79 +1,72 @@
 <html>
-<head>
-    <title>Url shorter</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <script>
-        function getShortUrl() {
-            var payload = {
-                url: document.getElementById('inputUrl').value
-            };
-
-            fetch("/link",
-                {
-                    method: "POST",
-                    body: JSON.stringify(payload)
-                })
-                .then(function(res){ return res.json(); })
-                .then(showShortUrl)
-        }
-
-        function showShortUrl(data) {
-            if (!data.ok) {
-                alert(data.error);
-                return;
+    <head>
+        <title>Url shorter</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <script src="/static/js/index.js"></script>
+        <script>
+            function redirectAuth() {
+                window.location.replace("https://www.facebook.com/v2.10/dialog/oauth?" +
+                    "client_id={{ $.Config.FacebookAppID }}" +
+                    "&redirect_uri={{ $.Config.FacebookLoginURL }}" +
+                    "&response_type=code"
+                );
             }
-
-            var link = "//" + location.hostname + '/' + data.data.short_url;
-            document.getElementById('shortUrl').value = "https:" + link ;
-        }
-
-        function checkLoginState() {
-            FB.getLoginStatus(function(response) {
-                statusChangeCallback(response);
-            });
-        }
-
-        function statusChangeCallback(response) {
-            console.log(response)
-        }
-
-    </script>
-</head>
-<body>
-
-<script>
-    window.fbAsyncInit = function() {
-        FB.init({
-            appId      : '{{ $.FacebookAppID }}',
-            cookie     : true,
-            xfbml      : true,
-            version    : '{{  $.FacebookApiSDK  }}'
-        });
-        FB.AppEvents.logPageView();
-    };
-
-    (function(d, s, id){
-        var js, fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) {return;}
-        js = d.createElement(s); js.id = id;
-        js.src = "//connect.facebook.net/en_US/sdk.js";
-        fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'facebook-jssdk'));
-</script>
-
-<div class="container" style="width: 50%; top: 30%; position: relative;">
-
-    <fb:login-button
-            scope="public_profile,email"
-            onlogin="checkLoginState();">
-    </fb:login-button>
-
-    <div class="form-group mx-sm-3">
-        <label for="inputUrl" class="sr-only">Password</label>
-        <input class="form-control" id="inputUrl" placeholder="Enter URL">
-        <button class="btn btn-primary" onclick="getShortUrl()" style="width: 30%; left: 35%; position: relative;">Short it!</button>
-    </div>
-    <input id="shortUrl" class="form-control" style="position: relative; width: 50%; left: 25%;" readonly>
-</div>
-</body>
+        </script>
+    </head>
+    <body>
+        <nav class="navbar navbar-inverse navbar-fixed-top">
+            {{ if $.User }}
+            <div class="container">
+                <div class="navbar-text navbar-right">{{ $.User.FirstName }} {{ $.User.LastName }}</div>
+            </div>
+            {{ else }}
+            <button class="btn" onclick="redirectAuth()" style="left: 80%; position: relative;">Login with Facebook</button>
+            {{ end }}
+        </nav>
+        <div class="container" style="width: 50%; top: 30%; position: relative;">
+            {{ with .Errors }}
+            <div class="alert alert-danger">
+                {{ range . }}
+                <pre>{{ . }}</pre>
+                {{ end }}
+            </div>
+            {{ end }}
+            <div class="form-group mx-sm-3">
+                <label for="inputUrl" class="sr-only">Password</label>
+                <input class="form-control" id="inputUrl" placeholder="Enter URL">
+                <button class="btn btn-primary" onclick="getShortUrl()" style="width: 30%; left: 35%; position: relative;">Short it!</button>
+                <div class="mx-sm-3">
+                    <input id="shortUrl" class="form-control" readonly>
+                </div>
+            </div>
+            {{ with .Links }}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>URL</th>
+                        <th>Short Url</th>
+                        <th>Views</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                {{ range . }}
+                        <tr>
+                            <td>
+                                <a href="{{ .URL }}">{{ .URL }}</a>
+                            </td>
+                            <td>
+                                <a href="{{ .ShortURL }}">{{ .ShortURL }}</a>
+                            </td>
+                            <td>
+                                {{ .Views }}
+                            </td>
+                        </tr>
+                {{ end }}
+                    </tbody>
+                </table>
+            </div>
+            {{ end }}
+        </div>
+    </body>
 </html>

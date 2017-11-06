@@ -14,37 +14,37 @@ const (
 
 type tablesCtxKey string
 
-// Tables represents tables from db
-type Tables struct {
+// Service represents tables from db
+type Service struct {
 	db     *dao.Db
 	cache  cache.ICache
 	logger logger.ILogger
 }
 
-// NewContext stores Tables in context
+// NewContext stores Service in context
 func NewContext(ctx context.Context, table interface{}) context.Context {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	if _, ok := table.(*Tables); !ok {
+	if _, ok := table.(*Service); !ok {
 		table = newTables(ctx)
 	}
 
 	return context.WithValue(ctx, ctxKey, table)
 }
 
-// FromContext returns Tables from context
-func FromContext(ctx context.Context) *Tables {
-	if table, ok := ctx.Value(ctxKey).(*Tables); ok {
+// FromContext returns Service from context
+func FromContext(ctx context.Context) *Service {
+	if table, ok := ctx.Value(ctxKey).(*Service); ok {
 		return table
 	}
 
 	return newTables(ctx)
 }
 
-func newTables(ctx context.Context) *Tables {
-	return &Tables{
+func newTables(ctx context.Context) *Service {
+	return &Service{
 		db:     dao.FromContext(ctx),
 		cache:  cache.FromContext(ctx),
 		logger: logger.FromContext(ctx),

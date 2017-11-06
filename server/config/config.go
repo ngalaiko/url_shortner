@@ -20,8 +20,8 @@ type configCtxKey string
 
 // Config is a application config struct
 type Config struct {
-	Db  DbConfig  `yaml:"Db"`
-	Web WebConfig `yaml:"Web"`
+	Db       DbConfig       `yaml:"Db"`
+	Web      WebConfig      `yaml:"Web"`
 	Facebook FacebookConfig `yaml:"Facebook"`
 }
 
@@ -80,6 +80,8 @@ func newConfig(ctx context.Context) *Config {
 		)
 	}
 
-	l.Info("config parsed")
+	l.Info("config parsed",
+		zap.Reflect("config", config),
+	)
 	return config
 }

@@ -3,7 +3,9 @@ package template
 import (
 	"bytes"
 	"html/template"
+
 	"github.com/ngalayko/url_shortner/server/config"
+	"github.com/ngalayko/url_shortner/server/schema"
 )
 
 const (
@@ -16,8 +18,11 @@ var (
 )
 
 type data struct {
-	FacebookApiSDK string
-	FacebookAppID  string
+	Config config.FacebookConfig
+	Errors []error
+
+	User  *schema.User
+	Links []*schema.Link
 }
 
 // DataFunc is a func to modify template data
@@ -46,7 +51,27 @@ func Index(dataOps ...DataFunc) ([]byte, error) {
 // WithFacebookConfig sets template facebook config
 func WithFacebookConfig(cfg config.FacebookConfig) DataFunc {
 	return func(d *data) {
-		d.FacebookApiSDK = cfg.FacebookApiSDK
-		d.FacebookAppID = cfg.FacebookAppID
+		d.Config = cfg
+	}
+}
+
+// WithErrors sets template errors
+func WithErrors(errors []error) DataFunc {
+	return func(d *data) {
+		d.Errors = errors
+	}
+}
+
+// WithUser sets template logged user
+func WithUser(user *schema.User) DataFunc {
+	return func(d *data) {
+		d.User = user
+	}
+}
+
+// WithLinks sets template links
+func WithLinks(links ...*schema.Link) DataFunc {
+	return func(d *data) {
+		d.Links = links
 	}
 }

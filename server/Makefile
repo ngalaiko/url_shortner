@@ -5,7 +5,7 @@ generate:
 	go generate ./generate/...
 	go-bindata -o ./template/data.go -pkg template ./template/data/...
 
-build: 
+build: generate 
 	env GOGC=off go build -o ./bin/url_shortner ./cmd/main.go
 
 build-alpine: deps generate
@@ -22,11 +22,5 @@ fmt:
 
 deps:
 	dep ensure
-
-docker-build:
-	docker build . -t url_shortner
-
-docker-run: docker-build
-	docker run -p 8080:8080 -v $(shell pwd)/data:/tmp/data url_shortner
 
 .PHONY: generate

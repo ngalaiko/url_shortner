@@ -95,9 +95,10 @@ func (s *TestTablesSuite) testUser(c *C) *schema.User {
 	s.usersCount++
 
 	user := &schema.User{
-		FirstName: fmt.Sprintf("first name %d", s.usersCount),
-		LastName:  fmt.Sprintf("last name %d", s.usersCount),
-		CreatedAt: time.Now(),
+		FirstName:  fmt.Sprintf("first name %d", s.usersCount),
+		LastName:   fmt.Sprintf("last name %d", s.usersCount),
+		CreatedAt:  time.Now(),
+		FacebookID: fmt.Sprintf("facebookID%d", s.usersCount),
 	}
 
 	if err := s.service.InsertUser(user); err != nil {

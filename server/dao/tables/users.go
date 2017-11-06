@@ -4,6 +4,7 @@ package tables
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -13,12 +14,12 @@ import (
 )
 
 // GetUserById returns User from db or cache
-func (t *Tables) GetUserById(id uint64) (*schema.User, error) {
+func (t *Service) GetUserById(id uint64) (*schema.User, error) {
 	return t.GetUserByFields(dao.NewParam(1).Add("id", id))
 }
 
 // GetUserByFields returns Users from db or cache
-func (t *Tables) GetUserByFields(field dao.Param) (*schema.User, error) {
+func (t *Service) GetUserByFields(field dao.Param) (*schema.User, error) {
 	fields := dao.NewParams(1).Append(field)
 
 	uu, err := t.SelectUsersByFields(fields)
@@ -26,11 +27,15 @@ func (t *Tables) GetUserByFields(field dao.Param) (*schema.User, error) {
 		return nil, err
 	}
 
+	if len(uu) == 0 {
+		return nil, sql.ErrNoRows
+	}
+
 	return uu[0], nil
 }
 
 // SelectUsersByFields select many users by fields
-func (t *Tables) SelectUsersByFields(fields dao.Params) ([]*schema.User, error) {
+func (t *Service) SelectUsersByFields(fields dao.Params) ([]*schema.User, error) {
 
 	if fields.Len() == 0 {
 		return nil, nil
@@ -96,17 +101,17 @@ func (t *Tables) SelectUsersByFields(fields dao.Params) ([]*schema.User, error) 
 }
 
 // InsertUser inserts User in db and cache
-func (t *Tables) InsertUser(u *schema.User) error {
+func (t *Service) InsertUser(u *schema.User) error {
 	return t.db.Mutate(func(tx *dao.Tx) error {
 
 		insertSQL := "INSERT INTO users " +
-			"(first_name, last_name, created_at, deleted_at) " +
+			"(first_name, last_name, facebook_id, created_at, deleted_at) " +
 			"VALUES " +
-			"($1, $2, $3, $4) " +
+			"($1, $2, $3, $4, $5) " +
 			"RETURNING id"
 
 		var id uint64
-		if err := tx.Get(&id, insertSQL, u.FirstName, u.LastName, u.CreatedAt, u.DeletedAt); err != nil {
+		if err := tx.Get(&id, insertSQL, u.FirstName, u.LastName, u.FacebookID, u.CreatedAt, u.DeletedAt); err != nil {
 			return err
 		}
 		u.ID = id
@@ -120,18 +125,19 @@ func (t *Tables) InsertUser(u *schema.User) error {
 }
 
 // UpdateUser updates User in db and cache
-func (t *Tables) UpdateUser(u *schema.User) error {
+func (t *Service) UpdateUser(u *schema.User) error {
 	return t.db.Mutate(func(tx *dao.Tx) error {
 
 		updateSQL := "UPDATE users " +
 			"SET " +
 			"first_name = $1, " +
 			"last_name = $2, " +
-			"created_at = $3, " +
-			"deleted_at = $4 " +
+			"facebook_id = $3, " +
+			"created_at = $4, " +
+			"deleted_at = $5 " +
 			fmt.Sprintf("WHERE id = %d", u.ID)
 
-		_, err := tx.Exec(updateSQL, u.FirstName, u.LastName, u.CreatedAt, u.DeletedAt)
+		_, err := tx.Exec(updateSQL, u.FirstName, u.LastName, u.FacebookID, u.CreatedAt, u.DeletedAt)
 		if err != nil {
 			return err
 		}
@@ -144,7 +150,7 @@ func (t *Tables) UpdateUser(u *schema.User) error {
 	})
 }
 
-func (t *Tables) usersCacheKey(id interface{}) string {
+func (t *Service) usersCacheKey(id interface{}) string {
 	b := bytes.Buffer{}
 	b.WriteString("user")
 

@@ -12,8 +12,10 @@ import (
 
 	"github.com/ngalayko/url_shortner/server/config"
 	"github.com/ngalayko/url_shortner/server/dao"
+	"github.com/ngalayko/url_shortner/server/facebook"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/services/links"
+	"github.com/ngalayko/url_shortner/server/services/user_token"
 	"github.com/ngalayko/url_shortner/server/services/users"
 )
 
@@ -32,13 +34,18 @@ type response struct {
 // Api is a web service
 type Api struct {
 	handler fasthttp.RequestHandler
-	config  config.WebConfig
-	fbConfig config.FacebookConfig
-	logger  logger.ILogger
-	db      *dao.Db
 
-	links *links.Links
-	users *users.Users
+	config   config.WebConfig
+	fbConfig config.FacebookConfig
+
+	logger logger.ILogger
+	db     *dao.Db
+
+	facebookAPI *facebook.Api
+
+	links      *links.Service
+	users      *users.Service
+	userTokens *user_token.Service
 }
 
 // NewContext stores web in context
@@ -69,11 +76,15 @@ func newApi(ctx context.Context) *Api {
 	w := &Api{
 		config:   cfg.Web,
 		fbConfig: cfg.Facebook,
-		logger:   logger.FromContext(ctx),
-		db:       dao.FromContext(ctx),
 
-		links: links.FromContext(ctx),
-		users: users.FromContext(ctx),
+		logger: logger.FromContext(ctx),
+		db:     dao.FromContext(ctx),
+
+		facebookAPI: facebook.FromContext(ctx),
+
+		links:      links.FromContext(ctx),
+		users:      users.FromContext(ctx),
+		userTokens: user_token.FromContext(ctx),
 	}
 
 	w.initHandler(ctx)
@@ -113,25 +124,39 @@ func (a *Api) initHandler(appCtx context.Context) {
 	a.handler = func(requestCtx *fasthttp.RequestCtx) {
 		start := time.Now()
 
+		ctx, err := a.NewCtx(requestCtx)
+		if err != nil {
+			a.responseErr(ctx, err)
+			return
+		}
+
 		switch {
 		case requestCtx.IsGet():
-			a.getHandlers(appCtx, requestCtx)
+			a.getHandlers(appCtx, ctx)
+
 		case requestCtx.IsPost():
-			a.postHandlers(appCtx, requestCtx)
+			a.postHandlers(appCtx, ctx)
+
 		default:
 			requestCtx.NotFound()
+
+		}
+
+		if ctx.RedirectUrl != "" {
+			ctx.Redirect(ctx.RedirectUrl, http.StatusFound)
 		}
 
 		a.logger.Info("handle request",
-			zap.ByteString("method", requestCtx.Method()),
-			zap.ByteString("url", requestCtx.RequestURI()),
-			zap.ByteString("body", requestCtx.PostBody()),
+			zap.ByteString("method", ctx.Method()),
+			zap.ByteString("url", ctx.RequestURI()),
+			zap.ByteString("body", ctx.PostBody()),
+			zap.Bool("authorized", ctx.Authorized()),
 			zap.Duration("duration", time.Since(start)),
 		)
 	}
 }
 
-func (a *Api) responseErr(ctx *fasthttp.RequestCtx, err error) {
+func (a *Api) responseErr(ctx *Ctx, err error) {
 	ctx.Response.SetStatusCode(http.StatusBadRequest)
 	ctx.Response.Header.Set("Content-Type", "application/json")
 
@@ -146,7 +171,7 @@ func (a *Api) responseErr(ctx *fasthttp.RequestCtx, err error) {
 	a.responseBytes(ctx, data)
 }
 
-func (a *Api) responseData(ctx *fasthttp.RequestCtx, obj interface{}) {
+func (a *Api) responseData(ctx *Ctx, obj interface{}) {
 	ctx.Response.SetStatusCode(http.StatusOK)
 	ctx.Response.Header.Set("Content-Type", "application/json")
 
@@ -161,12 +186,12 @@ func (a *Api) responseData(ctx *fasthttp.RequestCtx, obj interface{}) {
 	a.responseBytes(ctx, data)
 }
 
-func (a *Api) responseHtml(ctx *fasthttp.RequestCtx, data []byte) {
-	ctx.Response.Header.Set("Content-Type", "text/html")
+func (a *Api) responseHtml(ctx *Ctx, data []byte) {
+	ctx.Response.Header.Set("Content-Type", "text/html; charset=utf-8")
 
 	a.responseBytes(ctx, data)
 }
 
-func (a *Api) responseBytes(ctx *fasthttp.RequestCtx, data []byte) {
+func (a *Api) responseBytes(ctx *Ctx, data []byte) {
 	ctx.Response.AppendBody(data)
 }

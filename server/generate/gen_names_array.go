@@ -57,8 +57,7 @@ func main() {
 
 	generateSchemaTablesData = tablesArrayTemplate.ReplaceAll(generateSchemaTablesData, tablesBuffer.Bytes())
 
-	err = ioutil.WriteFile(generateSchemaTabelsFile, generateSchemaTablesData, 0644)
-	if err != nil {
+	if err := ioutil.WriteFile(generateSchemaTabelsFile, generateSchemaTablesData, 0644); err != nil {
 		log.Fatal(err)
 	}
 }

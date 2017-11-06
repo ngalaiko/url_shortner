@@ -1,6 +1,6 @@
 Db:
   Driver: "postgres"
-  Connect: "host=postgres user=url_short dbname=url_short sslmode=disable password=secret"
+  Connect: "host=localhost user=url_short dbname=url_short sslmode=disable password=secret"
   MaxIdleConns: 5
   MaxOpenConns: 10
 
@@ -10,4 +10,6 @@ Web:
 
 Facebook:
   FacebookAppID: "244050466119725"
+  FacebookAppSecret: "35a8e6a7b9889d1de8182e1998abb955"
   FacebookApiSDK: "v2.10"
+  FacebookLoginURL: "https://shortner.galayo.rocks/login/facebook"

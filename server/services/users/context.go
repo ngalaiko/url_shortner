@@ -14,7 +14,7 @@ func NewContext(ctx context.Context, links interface{}) context.Context {
 		ctx = context.Background()
 	}
 
-	if _, ok := links.(*Users); !ok {
+	if _, ok := links.(*Service); !ok {
 		links = newUsers(ctx)
 	}
 
@@ -22,8 +22,8 @@ func NewContext(ctx context.Context, links interface{}) context.Context {
 }
 
 // FromContext returns links form context
-func FromContext(ctx context.Context) *Users {
-	if links, ok := ctx.Value(ctxKey).(*Users); ok {
+func FromContext(ctx context.Context) *Service {
+	if links, ok := ctx.Value(ctxKey).(*Service); ok {
 		return links
 	}
 

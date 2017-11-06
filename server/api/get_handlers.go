@@ -3,65 +3,64 @@ package api
 import (
 	"context"
 	"database/sql"
-	"net/http"
-	"regexp"
-	"strconv"
 	"strings"
-
-	"github.com/valyala/fasthttp"
 
 	"github.com/ngalayko/url_shortner/server/template"
 )
 
-var (
-	usersRegEx     = regexp.MustCompile(`/users/(\d+)`)
-	userLinksRegEx = regexp.MustCompile(`/users/(\d+)/links`)
+const (
+	facebookAccessCodeURLParam = "code"
+	userTokenCookie            = "token"
 )
 
-func (a *Api) getHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCtx) {
+func (a *Api) getHandlers(appCtx context.Context, ctx *Ctx) {
 
-	requestUrl := string(requestCtx.RequestURI())
+	requestUrl := string(ctx.RequestURI())
 	switch {
 	case requestUrl == "/":
-		a.renderMainPage(requestCtx)
-
-	case userLinksRegEx.MatchString(requestUrl):
-		id, err := parseUserID(requestUrl)
+		data, err := a.renderMainPage(ctx)
 		if err != nil {
-			a.responseErr(requestCtx, err)
+			ctx.AddError(err)
+		}
+
+		a.responseHtml(ctx, data)
+
+	case strings.HasPrefix(requestUrl, facebookLoginRequestURI):
+		user, err := a.authorizeUser(ctx.RequestCtx)
+		if err != nil {
+			a.responseErr(ctx, err)
 			return
 		}
 
-		a.queryUserLinks(requestCtx, id)
-
-	case usersRegEx.MatchString(requestUrl):
-		id, err := parseUserID(requestUrl)
-		if err != nil {
-			a.responseErr(requestCtx, err)
+		if err := a.setUserCookie(ctx.RequestCtx, user); err != nil {
+			a.responseErr(ctx, err)
 			return
 		}
 
-		a.queryUser(requestCtx, id)
+		ctx.RedirectUrl = "https://" + string(ctx.URI().Host())
 
 	default:
-		a.queryLink(requestCtx)
+		a.redirectLink(ctx)
 
 	}
 }
 
-func (a *Api) renderMainPage(ctx *fasthttp.RequestCtx) {
+func (a *Api) renderMainPage(ctx *Ctx) ([]byte, error) {
+
 	data, err := template.Index(
 		template.WithFacebookConfig(a.fbConfig),
+		template.WithUser(ctx.User),
+		template.WithErrors(ctx.Errors),
+		template.WithLinks(ctx.Links...),
 	)
 	if err != nil {
-		a.responseErr(ctx, err)
-		return
+		return nil, err
 	}
 
-	a.responseHtml(ctx, data)
+	return data, err
 }
 
-func (a *Api) queryLink(ctx *fasthttp.RequestCtx) {
+func (a *Api) redirectLink(ctx *Ctx) {
 	shortUrl := string(ctx.RequestURI())[1:]
 
 	if len(shortUrl) == 0 {
@@ -74,47 +73,12 @@ func (a *Api) queryLink(ctx *fasthttp.RequestCtx) {
 	case err == sql.ErrNoRows:
 		ctx.NotFound()
 		return
+
 	case err != nil:
 		a.responseErr(ctx, err)
 		return
+
 	}
 
-	ctx.Redirect(link.URL, http.StatusFound)
-}
-
-func (a *Api) queryUser(ctx *fasthttp.RequestCtx, id uint64) {
-
-	user, err := a.users.QueryUserById(id)
-	switch {
-	case err == sql.ErrNoRows:
-		ctx.NotFound()
-		return
-	case err != nil:
-		a.responseErr(ctx, err)
-		return
-	}
-
-	a.responseData(ctx, user)
-}
-
-func (a *Api) queryUserLinks(ctx *fasthttp.RequestCtx, userID uint64) {
-
-	links, err := a.links.QueryLinksByUser(userID)
-	if err != nil {
-		a.responseErr(ctx, err)
-		return
-	}
-
-	a.responseData(ctx, links)
-}
-
-func parseUserID(requestURL string) (uint64, error) {
-	id := strings.Split(requestURL, "/")[2]
-
-	intID, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		return 0, nil
-	}
-
-	return uint64(intID), nil
+	ctx.RedirectUrl = link.URL
 }

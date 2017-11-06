@@ -1,8 +1,8 @@
 pipeline:
   build:
-    image: docker:stable 
+    image: docker:stable
     commands:
-     - docker build ./server -t docker.galayko.rocks/url_shortner 
+     - docker build . -t docker.galayko.rocks/url_shortner
      - docker push docker.galayko.rocks/url_shortner
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

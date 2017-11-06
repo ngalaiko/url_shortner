@@ -22,17 +22,17 @@ const (
 	httpScheme         = "http"
 )
 
-// Links is a links service
-type Links struct {
+// Service is a links service
+type Service struct {
 	logger logger.ILogger
-	tables *tables.Tables
+	tables *tables.Service
 
 	//channel of link ids to increment views of
 	viewsQueue chan uint64
 }
 
-func newLinks(ctx context.Context) *Links {
-	l := &Links{
+func newLinks(ctx context.Context) *Service {
+	l := &Service{
 		logger: logger.FromContext(ctx),
 		tables: tables.FromContext(ctx),
 
@@ -44,7 +44,7 @@ func newLinks(ctx context.Context) *Links {
 	return l
 }
 
-func (l *Links) loop() {
+func (l *Service) loop() {
 	for id := range l.viewsQueue {
 		if err := l.incrementNextLink(id); err != nil {
 			l.logger.Error("error incrementing link",
@@ -54,7 +54,7 @@ func (l *Links) loop() {
 	}
 }
 
-func (l *Links) incrementNextLink(linkId uint64) error {
+func (l *Service) incrementNextLink(linkId uint64) error {
 	link, err := l.tables.GetLinkById(linkId)
 	if err != nil {
 		return err
@@ -74,13 +74,29 @@ func (l *Links) incrementNextLink(linkId uint64) error {
 }
 
 // CreateLink creates given link
-func (l *Links) CreateLink(link *schema.Link) error {
+func (l *Service) CreateLink(link *schema.Link) (*schema.Link, error) {
 
 	if err := prepareLink(link); err != nil {
-		return err
+		return nil, err
 	}
 
-	return l.tables.InsertLink(link)
+	existed, err := l.QueryLinkByURlAndUserID(link.URL, link.UserID)
+	switch {
+	case err == sql.ErrNoRows:
+
+	case err == nil:
+		return existed, nil
+
+	case err != nil:
+		return nil, err
+
+	}
+
+	if err := l.tables.InsertLink(link); err != nil {
+		return nil, err
+	}
+
+	return link, nil
 }
 
 func prepareLink(link *schema.Link) error {
@@ -103,7 +119,7 @@ func prepareLink(link *schema.Link) error {
 }
 
 // QueryLinkByShortUrl returns link by short url
-func (l *Links) QueryLinkByShortUrl(shortUrl string) (*schema.Link, error) {
+func (l *Service) QueryLinkByShortUrl(shortUrl string) (*schema.Link, error) {
 
 	link, err := l.tables.GetLinkByFields(dao.NewParam(1).Add("short_url", shortUrl))
 	if err != nil {
@@ -119,7 +135,21 @@ func (l *Links) QueryLinkByShortUrl(shortUrl string) (*schema.Link, error) {
 	return link, nil
 }
 
+// QueryLinkByURlAndUserID returns link by uset id and url
+func (l *Service) QueryLinkByURlAndUserID(url string, userID uint64) (*schema.Link, error) {
+	link, err := l.tables.GetLinkByFields(dao.NewParam(2).Add("url", url).Add("user_id", userID))
+	if err != nil {
+		return nil, err
+	}
+
+	if !link.Valid() {
+		return nil, sql.ErrNoRows
+	}
+
+	return link, nil
+}
+
 // QueryLinkByShortUrl returns link by short url
-func (l *Links) QueryLinksByUser(userID uint64) ([]*schema.Link, error) {
+func (l *Service) QueryLinksByUser(userID uint64) ([]*schema.Link, error) {
 	return l.tables.SelectLinksByFields(dao.NewParams(1).Append(dao.NewParam(1).Add("user_id", userID)))
 }

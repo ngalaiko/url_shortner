@@ -16,7 +16,7 @@ import (
 type TestTablesSuite struct {
 	ctx context.Context
 
-	service *Tables
+	service *Service
 
 	usersCount int
 	linksCount int

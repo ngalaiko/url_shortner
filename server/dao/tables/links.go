@@ -4,6 +4,7 @@ package tables
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -13,12 +14,12 @@ import (
 )
 
 // GetLinkById returns Link from db or cache
-func (t *Tables) GetLinkById(id uint64) (*schema.Link, error) {
+func (t *Service) GetLinkById(id uint64) (*schema.Link, error) {
 	return t.GetLinkByFields(dao.NewParam(1).Add("id", id))
 }
 
 // GetLinkByFields returns Links from db or cache
-func (t *Tables) GetLinkByFields(field dao.Param) (*schema.Link, error) {
+func (t *Service) GetLinkByFields(field dao.Param) (*schema.Link, error) {
 	fields := dao.NewParams(1).Append(field)
 
 	ll, err := t.SelectLinksByFields(fields)
@@ -26,11 +27,15 @@ func (t *Tables) GetLinkByFields(field dao.Param) (*schema.Link, error) {
 		return nil, err
 	}
 
+	if len(ll) == 0 {
+		return nil, sql.ErrNoRows
+	}
+
 	return ll[0], nil
 }
 
 // SelectLinksByFields select many links by fields
-func (t *Tables) SelectLinksByFields(fields dao.Params) ([]*schema.Link, error) {
+func (t *Service) SelectLinksByFields(fields dao.Params) ([]*schema.Link, error) {
 
 	if fields.Len() == 0 {
 		return nil, nil
@@ -96,7 +101,7 @@ func (t *Tables) SelectLinksByFields(fields dao.Params) ([]*schema.Link, error) 
 }
 
 // InsertLink inserts Link in db and cache
-func (t *Tables) InsertLink(l *schema.Link) error {
+func (t *Service) InsertLink(l *schema.Link) error {
 	return t.db.Mutate(func(tx *dao.Tx) error {
 
 		insertSQL := "INSERT INTO links " +
@@ -120,7 +125,7 @@ func (t *Tables) InsertLink(l *schema.Link) error {
 }
 
 // UpdateLink updates Link in db and cache
-func (t *Tables) UpdateLink(l *schema.Link) error {
+func (t *Service) UpdateLink(l *schema.Link) error {
 	return t.db.Mutate(func(tx *dao.Tx) error {
 
 		updateSQL := "UPDATE links " +
@@ -148,7 +153,7 @@ func (t *Tables) UpdateLink(l *schema.Link) error {
 	})
 }
 
-func (t *Tables) linksCacheKey(id interface{}) string {
+func (t *Service) linksCacheKey(id interface{}) string {
 	b := bytes.Buffer{}
 	b.WriteString("link")
 

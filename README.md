@@ -9,5 +9,5 @@
 5) click limit - move this to separate table, (link preferences)
 6) time limit **DONE** 
 7) dockerize **DONE**
-8) bootstrap ui
-9) social auth
+8) bootstrap ui **IN PROGRESS**
+9) social auth **DONE**

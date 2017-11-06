@@ -13,11 +13,12 @@ const (
 // User is a user db object
 //easyjson:json
 type User struct {
-	ID        uint64     `json:"id" db:"id" unique:"true"`
-	FirstName string     `json:"first_name" db:"first_name"`
-	LastName  string     `json:"last_name" db:"last_name"`
-	CreatedAt time.Time  `json:"created_at" db:"created_at"`
-	DeletedAt *time.Time `json:"deleted_at" db:"deleted_at"`
+	ID         uint64     `json:"id" db:"id" unique:"true"`
+	FirstName  string     `json:"first_name" db:"first_name"`
+	LastName   string     `json:"last_name" db:"last_name"`
+	FacebookID string     `json:"facebook_id" db:"facebook_id"`
+	CreatedAt  time.Time  `json:"created_at" db:"created_at"`
+	DeletedAt  *time.Time `json:"deleted_at" db:"deleted_at"`
 }
 
 // Validate validates user structure fields

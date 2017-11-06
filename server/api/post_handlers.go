@@ -4,29 +4,34 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/valyala/fasthttp"
-
 	"github.com/ngalayko/url_shortner/server/schema"
 )
 
-func (a *Api) postHandlers(appCtx context.Context, requestCtx *fasthttp.RequestCtx) {
+func (a *Api) postHandlers(appCtx context.Context, requestCtx *Ctx) {
 
 	switch string(requestCtx.RequestURI()) {
 	case "/link":
 		a.createLink(requestCtx)
+
 	default:
 		requestCtx.NotFound()
+
 	}
 }
 
-func (a *Api) createLink(ctx *fasthttp.RequestCtx) {
+func (a *Api) createLink(ctx *Ctx) {
 	link := &schema.Link{}
 	if err := json.Unmarshal(ctx.PostBody(), link); err != nil {
 		a.responseErr(ctx, err)
 		return
 	}
 
-	if err := a.links.CreateLink(link); err != nil {
+	if ctx.Authorized() {
+		link.UserID = ctx.User.ID
+	}
+
+	link, err := a.links.CreateLink(link)
+	if err != nil {
 		a.responseErr(ctx, err)
 		return
 	}
