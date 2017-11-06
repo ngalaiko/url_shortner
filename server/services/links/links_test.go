@@ -1,19 +1,130 @@
 package links
 
 import (
+	"context"
+	"log"
 	"testing"
 	"time"
 
 	. "gopkg.in/check.v1"
 
+	"github.com/ngalayko/url_shortner/server/cache"
+	"github.com/ngalayko/url_shortner/server/config"
+	"github.com/ngalayko/url_shortner/server/dao/migrate"
+	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/schema"
 )
 
-type TestLinksSuite struct{}
+type TestLinksSuite struct {
+	ctx context.Context
+
+	service *Service
+
+	usersCount int
+	linksCount int
+}
 
 func Test(t *testing.T) { TestingT(t) }
 
+var suite *TestLinksSuite
+
 var _ = Suite(&TestLinksSuite{})
+
+func (s *TestLinksSuite) SetUpSuite(c *C) {
+	suite = &TestLinksSuite{
+		ctx: context.Background(),
+	}
+
+	s.init()
+
+	m := migrate.FromContext(s.ctx)
+	if err := m.Flush(); err != nil {
+		c.Fatal(err)
+	}
+
+	if err := m.Apply(); err != nil {
+		log.Panicf("error applying migrations: %s", err)
+	}
+}
+
+func (s *TestLinksSuite) init() {
+	s.ctx = cache.NewContext(nil, cache.NewStubCache())
+	s.ctx = logger.NewContext(s.ctx, logger.NewTestLogger())
+	s.ctx = config.NewContext(s.ctx, s.initConfig())
+	s.ctx = migrate.NewContext(s.ctx, nil)
+
+	s.service = FromContext(s.ctx)
+}
+
+func (s *TestLinksSuite) initConfig() *config.Config {
+	return &config.Config{
+		Db: config.DbConfig{
+			Driver:       "postgres",
+			Connect:      "host=localhost user=url_short_test dbname=url_short_test sslmode=disable password=secret",
+			MaxIdleConns: 5,
+			MaxOpenConns: 5,
+		},
+	}
+}
+
+func (s *TestLinksSuite) Test_CreateLink__should_create_link(c *C) {
+	form := &schema.Link{
+		URL: "vk.com",
+	}
+
+	link, err := s.service.CreateLink(form)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	c.Assert(form.URL, Equals, link.URL)
+}
+
+func (s *TestLinksSuite) Test_CreateLink__should_return_existing_link(c *C) {
+	form := &schema.Link{
+		URL: "vk.com",
+	}
+
+	link2, err := s.service.CreateLink(form)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	link1, err := s.service.CreateLink(form)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	c.Assert(link1.ID, Equals, link2.ID)
+}
+
+func (s *TestLinksSuite) Test_CreateLink__should_return_link_if_not_valid_exists(c *C) {
+	form := &schema.Link{
+		URL: "vk.com",
+	}
+
+	link2, err := s.service.CreateLink(form)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	if err := s.service.deleteLink(link2); err != nil {
+		c.Fatal(err)
+	}
+
+	link1, err := s.service.CreateLink(form)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	link3, err := s.service.CreateLink(form)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	c.Assert(link1.ID, Not(Equals), link2.ID)
+	c.Assert(link3.ID, Equals, link2.ID)
+}
 
 func (s *TestLinksSuite) Test_prepareLink__should_set_schema(c *C) {
 

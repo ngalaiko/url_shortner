@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/huandu/facebook"
+  packages = ["."]
+  revision = "cb06a50311533d4c24211a80cffb6cf7eaeb5f52"
+  version = "v2.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/jmoiron/sqlx"
   packages = [".","reflectx"]
@@ -30,12 +36,6 @@
   name = "github.com/lib/pq"
   packages = [".","oid"]
   revision = "e42267488fe361b9dc034be7a6bffef5b195bceb"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/mailru/easyjson"
-  packages = [".","buffer","jlexer","jwriter"]
-  revision = "2a92e673c9a6302dd05c3a691ae1f24aef46457d"
 
 [[projects]]
   name = "github.com/valyala/fasthttp"
@@ -82,6 +82,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d6b11d250b4daaf27eb0a06c0c897f72312580d7650417ff9a89618fa3dd85ce"
+  inputs-digest = "113a8cdf68f302d9a38b79ed7ef5c57282d5c9ff67142b0952d3fb77bb989633"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -80,7 +80,7 @@ func (l *Service) CreateLink(link *schema.Link) (*schema.Link, error) {
 		return nil, err
 	}
 
-	existed, err := l.QueryLinkByURlAndUserID(link.URL, link.UserID)
+	existed, err := l.queryLinkByURlAndUserID(link.URL, link.UserID)
 	switch {
 	case err == sql.ErrNoRows:
 
@@ -136,7 +136,7 @@ func (l *Service) QueryLinkByShortUrl(shortUrl string) (*schema.Link, error) {
 }
 
 // QueryLinkByURlAndUserID returns link by uset id and url
-func (l *Service) QueryLinkByURlAndUserID(url string, userID uint64) (*schema.Link, error) {
+func (l *Service) queryLinkByURlAndUserID(url string, userID uint64) (*schema.Link, error) {
 	link, err := l.tables.GetLinkByFields(dao.NewParam(2).Add("url", url).Add("user_id", userID))
 	if err != nil {
 		return nil, err
@@ -152,4 +152,15 @@ func (l *Service) QueryLinkByURlAndUserID(url string, userID uint64) (*schema.Li
 // QueryLinkByShortUrl returns link by short url
 func (l *Service) QueryLinksByUser(userID uint64) ([]*schema.Link, error) {
 	return l.tables.SelectLinksByFields(dao.NewParams(1).Append(dao.NewParam(1).Add("user_id", userID)))
+}
+
+func (l *Service) deleteLink(link *schema.Link) error {
+	if link.DeletedAt != nil {
+		return nil
+	}
+
+	link.DeletedAt = new(time.Time)
+	*link.DeletedAt = time.Now()
+
+	return l.tables.UpdateLink(link)
 }
