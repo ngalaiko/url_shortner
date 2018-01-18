@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"testing"
-	"time"
 
 	. "gopkg.in/check.v1"
 
@@ -128,19 +127,6 @@ func (s *TestLinksSuite) Test_prepareLink__should_not_set_schema(c *C) {
 	}
 
 	c.Assert(link.URL, Equals, url)
-}
-
-func (s *TestLinksSuite) Test_prepareLink__should_set_created_at_expired_at(c *C) {
-	link := &schema.Link{
-		URL: "vk.com",
-	}
-
-	if err := prepareLink(link); err != nil {
-		c.Fatal(err)
-	}
-
-	c.Assert(link.CreatedAt, Not(Equals), time.Unix(0, 0))
-	c.Assert(link.ExpiredAt.After(link.CreatedAt), Equals, true)
 }
 
 func (s *TestLinksSuite) Test_prepareLink__should_create_short_uri(c *C) {

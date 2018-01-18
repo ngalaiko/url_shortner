@@ -17,7 +17,6 @@ import (
 )
 
 const (
-	defaultExpire      = 24 * time.Hour
 	defaultShortUrlLen = 6
 	httpScheme         = "http"
 )
@@ -109,7 +108,6 @@ func prepareLink(link *schema.Link) error {
 	link.URL = uri.String()
 	link.CreatedAt = now
 	link.ShortURL = helpers.RandomString(defaultShortUrlLen)
-	link.ExpiredAt = now.Add(defaultExpire)
 
 	return nil
 }

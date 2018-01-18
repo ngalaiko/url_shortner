@@ -120,7 +120,18 @@ func migrations() []*migration {
 		{
 			Name: "create links.user_id_url_not_deleted_not_anon_unique_ix",
 			RawSQL: `
-				CREATE UNIQUE INDEX user_id_url_not_deleted_not_anon_unique_ix ON links(user_id, url) WHERE deleted_at IS NULL AND user_id > 0
+				CREATE UNIQUE INDEX user_id_url_not_deleted_not_anon_unique_ix
+				ON links(user_id, url)
+				WHERE
+					deleted_at IS NULL AND
+					user_id > 0
+			`,
+			FlushSQL: `DROP INDEX user_id_url_not_deleted_not_anon_unique_ix`,
+		},
+		{
+			Name: "drop links.expired_at",
+			RawSQL: `
+				ALTER TABLE links DROP COLUMN expired_at
 			`,
 		},
 	}

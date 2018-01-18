@@ -16,7 +16,6 @@ type Link struct {
 	ShortURL   string     `json:"short_url" db:"short_url" reform:"short_url"`
 	ViewsLimit uint64     `json:"views_limit" db:"views_limit" reform:"views_limit"`
 	Views      uint64     `json:"views" db:"views" reform:"views"`
-	ExpiredAt  time.Time  `json:"expired_at" db:"expired_at" reform:"expired_at"`
 	CreatedAt  time.Time  `json:"created_at" db:"created_at" reform:"created_at"`
 	DeletedAt  *time.Time `json:"deleted_at" db:"deleted_at" reform:"deleted_at"`
 }
@@ -24,8 +23,6 @@ type Link struct {
 // Valid returns true if link is valid
 func (l *Link) Valid() bool {
 	switch {
-	case l.ExpiredAt.Before(time.Now()):
-		return false
 	case l.DeletedAt != nil:
 		return false
 	case l.ViewsLimit > 0 && l.Views >= l.ViewsLimit:
@@ -35,6 +32,7 @@ func (l *Link) Valid() bool {
 	}
 }
 
+// Anonim returns if link crated by not authorizated user
 func (l *Link) Anonim() bool {
 	return l.UserID == uint64(0)
 }

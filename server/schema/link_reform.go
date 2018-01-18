@@ -27,7 +27,7 @@ func (v *linkTableType) Name() string {
 
 // Columns returns a new slice of column names for that view or table in SQL database.
 func (v *linkTableType) Columns() []string {
-	return []string{"id", "user_id", "url", "short_url", "views_limit", "views", "expired_at", "created_at", "deleted_at"}
+	return []string{"id", "user_id", "url", "short_url", "views_limit", "views", "created_at", "deleted_at"}
 }
 
 // NewStruct makes a new struct for that view or table.
@@ -47,22 +47,21 @@ func (v *linkTableType) PKColumnIndex() uint {
 
 // LinkTable represents links view or table in SQL database.
 var LinkTable = &linkTableType{
-	s: parse.StructInfo{Type: "Link", SQLSchema: "", SQLName: "links", Fields: []parse.FieldInfo{{Name: "ID", Type: "uint64", Column: "id"}, {Name: "UserID", Type: "uint64", Column: "user_id"}, {Name: "URL", Type: "string", Column: "url"}, {Name: "ShortURL", Type: "string", Column: "short_url"}, {Name: "ViewsLimit", Type: "uint64", Column: "views_limit"}, {Name: "Views", Type: "uint64", Column: "views"}, {Name: "ExpiredAt", Type: "time.Time", Column: "expired_at"}, {Name: "CreatedAt", Type: "time.Time", Column: "created_at"}, {Name: "DeletedAt", Type: "*time.Time", Column: "deleted_at"}}, PKFieldIndex: 0},
+	s: parse.StructInfo{Type: "Link", SQLSchema: "", SQLName: "links", Fields: []parse.FieldInfo{{Name: "ID", Type: "uint64", Column: "id"}, {Name: "UserID", Type: "uint64", Column: "user_id"}, {Name: "URL", Type: "string", Column: "url"}, {Name: "ShortURL", Type: "string", Column: "short_url"}, {Name: "ViewsLimit", Type: "uint64", Column: "views_limit"}, {Name: "Views", Type: "uint64", Column: "views"}, {Name: "CreatedAt", Type: "time.Time", Column: "created_at"}, {Name: "DeletedAt", Type: "*time.Time", Column: "deleted_at"}}, PKFieldIndex: 0},
 	z: new(Link).Values(),
 }
 
 // String returns a string representation of this struct or record.
 func (s Link) String() string {
-	res := make([]string, 9)
+	res := make([]string, 8)
 	res[0] = "ID: " + reform.Inspect(s.ID, true)
 	res[1] = "UserID: " + reform.Inspect(s.UserID, true)
 	res[2] = "URL: " + reform.Inspect(s.URL, true)
 	res[3] = "ShortURL: " + reform.Inspect(s.ShortURL, true)
 	res[4] = "ViewsLimit: " + reform.Inspect(s.ViewsLimit, true)
 	res[5] = "Views: " + reform.Inspect(s.Views, true)
-	res[6] = "ExpiredAt: " + reform.Inspect(s.ExpiredAt, true)
-	res[7] = "CreatedAt: " + reform.Inspect(s.CreatedAt, true)
-	res[8] = "DeletedAt: " + reform.Inspect(s.DeletedAt, true)
+	res[6] = "CreatedAt: " + reform.Inspect(s.CreatedAt, true)
+	res[7] = "DeletedAt: " + reform.Inspect(s.DeletedAt, true)
 	return strings.Join(res, ", ")
 }
 
@@ -76,7 +75,6 @@ func (s *Link) Values() []interface{} {
 		s.ShortURL,
 		s.ViewsLimit,
 		s.Views,
-		s.ExpiredAt,
 		s.CreatedAt,
 		s.DeletedAt,
 	}
@@ -92,7 +90,6 @@ func (s *Link) Pointers() []interface{} {
 		&s.ShortURL,
 		&s.ViewsLimit,
 		&s.Views,
-		&s.ExpiredAt,
 		&s.CreatedAt,
 		&s.DeletedAt,
 	}
