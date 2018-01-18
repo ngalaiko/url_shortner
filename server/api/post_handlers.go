@@ -30,8 +30,7 @@ func (a *Api) createLink(ctx *Ctx) {
 		link.UserID = ctx.User.ID
 	}
 
-	link, err := a.links.CreateLink(link)
-	if err != nil {
+	if err := a.links.CreateLink(link); err != nil {
 		a.responseErr(ctx, err)
 		return
 	}

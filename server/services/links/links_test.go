@@ -2,6 +2,7 @@ package links
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"testing"
 	"time"
@@ -50,47 +51,26 @@ func (s *TestLinksSuite) SetUpSuite(c *C) {
 func (s *TestLinksSuite) init() {
 	s.ctx = cache.NewContext(nil, cache.NewStubCache())
 	s.ctx = logger.NewContext(s.ctx, logger.NewTestLogger())
-	s.ctx = config.NewContext(s.ctx, s.initConfig())
+	s.ctx = config.NewContext(s.ctx, config.NewTestConfig())
 	s.ctx = migrate.NewContext(s.ctx, nil)
 
 	s.service = FromContext(s.ctx)
 }
 
-func (s *TestLinksSuite) initConfig() *config.Config {
-	return &config.Config{
-		Db: config.DbConfig{
-			Driver:       "postgres",
-			Connect:      "host=localhost user=url_short_test dbname=url_short_test sslmode=disable password=secret",
-			MaxIdleConns: 5,
-			MaxOpenConns: 5,
-		},
-	}
-}
-
 func (s *TestLinksSuite) Test_CreateLink__should_create_link(c *C) {
-	form := &schema.Link{
-		URL: "vk.com",
-	}
-
-	link, err := s.service.CreateLink(form)
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	c.Assert(form.URL, Equals, link.URL)
+	_, err := s.createLink()
+	c.Assert(err, IsNil)
 }
 
 func (s *TestLinksSuite) Test_CreateLink__should_return_existing_link(c *C) {
-	form := &schema.Link{
-		URL: "vk.com",
-	}
-
-	link2, err := s.service.CreateLink(form)
+	link1, err := s.createLink()
 	if err != nil {
 		c.Fatal(err)
 	}
 
-	link1, err := s.service.CreateLink(form)
+	link2, err := s.createLink(
+		withUrl(link1.URL),
+	)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -99,25 +79,25 @@ func (s *TestLinksSuite) Test_CreateLink__should_return_existing_link(c *C) {
 }
 
 func (s *TestLinksSuite) Test_CreateLink__should_return_link_if_not_valid_exists(c *C) {
-	form := &schema.Link{
-		URL: "vk.com",
-	}
-
-	link2, err := s.service.CreateLink(form)
+	link1, err := s.createLink()
 	if err != nil {
 		c.Fatal(err)
 	}
 
-	if err := s.service.deleteLink(link2); err != nil {
+	if err := s.service.deleteLink(link1); err != nil {
 		c.Fatal(err)
 	}
 
-	link1, err := s.service.CreateLink(form)
+	link2, err := s.createLink(
+		withUrl(link1.URL),
+	)
 	if err != nil {
 		c.Fatal(err)
 	}
 
-	link3, err := s.service.CreateLink(form)
+	link3, err := s.createLink(
+		withUrl(link1.URL),
+	)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -191,4 +171,32 @@ func (s *TestLinksSuite) Test_prepareLink__should_not_validate_url(c *C) {
 
 	err := prepareLink(link)
 	c.Assert(err, NotNil)
+}
+
+// helpers
+
+func (s *TestLinksSuite) createLink(opts ...optionFunc) (*schema.Link, error) {
+
+	link := &schema.Link{
+		URL: fmt.Sprintf("http://vk.com/%d", s.linksCount),
+	}
+
+	for _, opt := range opts {
+		opt(link)
+	}
+
+	if err := s.service.CreateLink(link); err != nil {
+		return nil, err
+	}
+
+	s.linksCount++
+	return link, nil
+}
+
+type optionFunc func(*schema.Link)
+
+func withUrl(url string) optionFunc {
+	return func(l *schema.Link) {
+		l.URL = url
+	}
 }

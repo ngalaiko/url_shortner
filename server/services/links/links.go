@@ -3,6 +3,7 @@ package links
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/url"
 	"strings"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/ngalayko/url_shortner/server/dao"
-	"github.com/ngalayko/url_shortner/server/dao/tables"
 	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/schema"
@@ -25,7 +25,7 @@ const (
 // Service is a links service
 type Service struct {
 	logger logger.ILogger
-	tables *tables.Service
+	db     *dao.Db
 
 	//channel of link ids to increment views of
 	viewsQueue chan uint64
@@ -34,7 +34,7 @@ type Service struct {
 func newLinks(ctx context.Context) *Service {
 	l := &Service{
 		logger: logger.FromContext(ctx),
-		tables: tables.FromContext(ctx),
+		db:     dao.FromContext(ctx),
 
 		viewsQueue: make(chan uint64),
 	}
@@ -55,13 +55,13 @@ func (l *Service) loop() {
 }
 
 func (l *Service) incrementNextLink(linkId uint64) error {
-	link, err := l.tables.GetLinkById(linkId)
-	if err != nil {
+	link := &schema.Link{}
+	if err := l.db.FindByPrimaryKeyTo(link, linkId); err != nil {
 		return err
 	}
 
 	link.Views += 1
-	if err := l.tables.UpdateLink(link); err != nil {
+	if err := l.db.Update(link); err != nil {
 		return err
 	}
 
@@ -74,29 +74,27 @@ func (l *Service) incrementNextLink(linkId uint64) error {
 }
 
 // CreateLink creates given link
-func (l *Service) CreateLink(link *schema.Link) (*schema.Link, error) {
-
+func (l *Service) CreateLink(link *schema.Link) error {
 	if err := prepareLink(link); err != nil {
-		return nil, err
+		return err
 	}
 
 	existed, err := l.queryLinkByURlAndUserID(link.URL, link.UserID)
 	switch {
 	case err == sql.ErrNoRows:
+		fmt.Println("not found")
 
 	case err == nil:
-		return existed, nil
+		fmt.Println("found")
+		*link = *existed
+		return nil
 
 	case err != nil:
-		return nil, err
+		return err
 
 	}
 
-	if err := l.tables.InsertLink(link); err != nil {
-		return nil, err
-	}
-
-	return link, nil
+	return l.db.Insert(link)
 }
 
 func prepareLink(link *schema.Link) error {
@@ -120,9 +118,8 @@ func prepareLink(link *schema.Link) error {
 
 // QueryLinkByShortUrl returns link by short url
 func (l *Service) QueryLinkByShortUrl(shortUrl string) (*schema.Link, error) {
-
-	link, err := l.tables.GetLinkByFields(dao.NewParam(1).Add("short_url", shortUrl))
-	if err != nil {
+	link := &schema.Link{}
+	if err := l.db.FindOneTo(link, "short_url", shortUrl); err != nil {
 		return nil, err
 	}
 
@@ -135,10 +132,16 @@ func (l *Service) QueryLinkByShortUrl(shortUrl string) (*schema.Link, error) {
 	return link, nil
 }
 
-// QueryLinkByURlAndUserID returns link by uset id and url
+// QueryLinkByURlAndUserID returns link by userID and url
 func (l *Service) queryLinkByURlAndUserID(url string, userID uint64) (*schema.Link, error) {
-	link, err := l.tables.GetLinkByFields(dao.NewParam(2).Add("url", url).Add("user_id", userID))
-	if err != nil {
+	link := &schema.Link{}
+	tail := fmt.Sprintf(`
+		WHERE
+			url = %s AND
+			user_id = %s AND
+			deleted_at IS NULL
+	`, l.db.Placeholder(1), l.db.Placeholder(2))
+	if err := l.db.SelectOneTo(link, tail, url, userID); err != nil {
 		return nil, err
 	}
 
@@ -151,7 +154,23 @@ func (l *Service) queryLinkByURlAndUserID(url string, userID uint64) (*schema.Li
 
 // QueryLinkByShortUrl returns link by short url
 func (l *Service) QueryLinksByUser(userID uint64) ([]*schema.Link, error) {
-	return l.tables.SelectLinksByFields(dao.NewParams(1).Append(dao.NewParam(1).Add("user_id", userID)))
+	rows, err := l.db.FindRows(schema.LinkTable, "user_id", userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// todo: make big slice
+	links := []*schema.Link{}
+	for {
+		link := &schema.Link{}
+		if err := l.db.NextRow(link, rows); err != nil {
+			break
+		}
+		links = append(links, link)
+	}
+
+	return links, nil
 }
 
 func (l *Service) deleteLink(link *schema.Link) error {
@@ -162,5 +181,5 @@ func (l *Service) deleteLink(link *schema.Link) error {
 	link.DeletedAt = new(time.Time)
 	*link.DeletedAt = time.Now()
 
-	return l.tables.UpdateLink(link)
+	return l.db.Update(link)
 }

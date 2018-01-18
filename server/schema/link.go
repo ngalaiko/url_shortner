@@ -4,18 +4,21 @@ import (
 	"time"
 )
 
+//go:generate reform
+
 // Link is a link db object
 //easyjson:json
+//reform:links
 type Link struct {
-	ID         uint64     `json:"id" db:"id" unique:"true"`
-	UserID     uint64     `json:"user_id" db:"user_id"`
-	URL        string     `json:"url" db:"url"`
-	ShortURL   string     `json:"short_url" db:"short_url"`
-	ViewsLimit uint64     `json:"views_limit" db:"views_limit"`
-	Views      uint64     `json:"views" db:"views"`
-	ExpiredAt  time.Time  `json:"expired_at" db:"expired_at"`
-	CreatedAt  time.Time  `json:"created_at" db:"created_at"`
-	DeletedAt  *time.Time `json:"deleted_at" db:"deleted_at"`
+	ID         uint64     `json:"id" db:"id" unique:"true" reform:"id,pk"`
+	UserID     uint64     `json:"user_id" db:"user_id" reform:"user_id"`
+	URL        string     `json:"url" db:"url" reform:"url"`
+	ShortURL   string     `json:"short_url" db:"short_url" reform:"short_url"`
+	ViewsLimit uint64     `json:"views_limit" db:"views_limit" reform:"views_limit"`
+	Views      uint64     `json:"views" db:"views" reform:"views"`
+	ExpiredAt  time.Time  `json:"expired_at" db:"expired_at" reform:"expired_at"`
+	CreatedAt  time.Time  `json:"created_at" db:"created_at" reform:"created_at"`
+	DeletedAt  *time.Time `json:"deleted_at" db:"deleted_at" reform:"deleted_at"`
 }
 
 // Valid returns true if link is valid

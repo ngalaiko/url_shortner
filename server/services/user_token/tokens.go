@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ngalayko/url_shortner/server/dao"
-	"github.com/ngalayko/url_shortner/server/dao/tables"
 	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/schema"
@@ -20,13 +19,13 @@ const (
 // Service is a user token service
 type Service struct {
 	logger logger.ILogger
-	tables *tables.Service
+	db     *dao.Db
 }
 
 func newTokens(ctx context.Context) *Service {
 	return &Service{
 		logger: logger.FromContext(ctx),
-		tables: tables.FromContext(ctx),
+		db:     dao.FromContext(ctx),
 	}
 }
 
@@ -37,7 +36,8 @@ func (t *Service) GetUserToken(token string) (*schema.UserToken, error) {
 		return nil, sql.ErrNoRows
 	}
 
-	userToken, err := t.tables.GetUserTokenByFields(dao.NewParam(1).Add("token", token))
+	userToken := &schema.UserToken{}
+	err := t.db.FindOneTo(userToken, "token", token)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (t *Service) CreateUserToken(user *schema.User) (*schema.UserToken, error) 
 		Token:     helpers.RandomString(defaultTokenLength),
 	}
 
-	if err := t.tables.InsertUserToken(token); err != nil {
+	if err := t.db.Insert(token); err != nil {
 		return nil, err
 	}
 

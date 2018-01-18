@@ -2,10 +2,10 @@
 all: deps generate build
 
 generate:
-	go generate ./generate/...
+	go generate ./...
 	go-bindata -o ./template/data.go -pkg template ./template/data/...
 
-build: generate 
+build:
 	env GOGC=off go build -o ./bin/url_shortner ./cmd/main.go
 
 build-alpine: deps generate

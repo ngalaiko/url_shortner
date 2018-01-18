@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.uber.org/zap"
+	reform "gopkg.in/reform.v1"
 
 	"github.com/ngalayko/url_shortner/server/dao"
 	"github.com/ngalayko/url_shortner/server/logger"
@@ -119,17 +120,18 @@ func (m *Migrate) applyInitMigrations() error {
 }
 
 func (m *Migrate) applied() (map[string]*migration, error) {
-	var migrations []*migration
-
-	if err := m.Db.Select(&migrations, `
-	SELECT m.*
-	FROM migrations m
-	`); err != nil {
+	rows, err := m.Db.SelectRows(migrationTable, "")
+	if err != nil {
 		return nil, err
 	}
 
 	result := map[string]*migration{}
-	for _, migration := range migrations {
+	for {
+		migration := &migration{}
+		if err := m.Db.NextRow(migration, rows); err != nil {
+			break
+		}
+
 		result[migration.Name] = migration
 	}
 
@@ -137,7 +139,7 @@ func (m *Migrate) applied() (map[string]*migration, error) {
 }
 
 func (m *Migrate) applyMigration(migration *migration) error {
-	return m.Db.Mutate(func(tx *dao.Tx) error {
+	return m.Db.InTransaction(func(tx *reform.TX) error {
 
 		m.logger.Info("applying migration",
 			zap.String("name", migration.Name),

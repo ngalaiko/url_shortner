@@ -2,12 +2,13 @@ package dao
 
 import (
 	"context"
-	"fmt"
+	"database/sql"
+	"time"
 
-	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
+	"gopkg.in/reform.v1"
+	"gopkg.in/reform.v1/dialects/postgresql"
 
-	// mandatory to init pq
 	_ "github.com/lib/pq"
 
 	"github.com/ngalayko/url_shortner/server/config"
@@ -22,8 +23,7 @@ type dbCtxKey string
 
 // Db is a database service
 type Db struct {
-	*sqlx.DB
-	logger logger.ILogger
+	*reform.DB
 	config config.DbConfig
 }
 
@@ -63,42 +63,47 @@ func newDb(ctx context.Context) *Db {
 	return db
 }
 
-func newDbHelper(cfg config.DbConfig, l logger.ILogger) *Db {
-
-	db, err := sqlx.Open(cfg.Driver, cfg.Connect)
+func newDbHelper(cfg config.DbConfig, logger logger.ILogger) *Db {
+	conn, err := sql.Open(cfg.Driver, cfg.Connect)
 	if err != nil {
-		l.Panic("error while open db connection",
+		logger.Panic("error while open db connection",
 			zap.Error(err),
 		)
 	}
+	logger.Info("db connection created")
 
-	db.SetMaxIdleConns(cfg.MaxIdleConns)
-	db.SetMaxOpenConns(cfg.MaxOpenConns)
-
-	l.Info("db connection created")
+	conn.SetMaxIdleConns(cfg.MaxIdleConns)
+	conn.SetMaxOpenConns(cfg.MaxOpenConns)
 
 	return &Db{
-		DB:     db,
-		logger: l,
+		DB: reform.NewDB(conn, postgresql.Dialect, newDbLogger(logger)),
 	}
 }
 
-// Mutate opens new tx, applies callback func and close tx
-func (db *Db) Mutate(callback func(tx *Tx) error) error {
-	tx := &Tx{
-		db:     db.DB,
-		logger: db.logger,
-	}
+type dbLogger struct {
+	logger logger.ILogger
+}
 
-	err := callback(tx)
-	switch err {
-	case nil:
-		return tx.Commit()
-	default:
-		if err := tx.Rollback(); err != nil {
-			return fmt.Errorf("error while rollback transaction: %s", err)
-		}
-
-		return err
+func newDbLogger(logger logger.ILogger) *dbLogger {
+	return &dbLogger{
+		logger: logger,
 	}
+}
+
+func (l *dbLogger) Before(query string, args []interface{}) {
+	l.logger.Debug(
+		"execute query",
+		zap.String("query", query),
+		zap.Reflect("args", args),
+	)
+}
+
+func (l *dbLogger) After(query string, args []interface{}, d time.Duration, err error) {
+	l.logger.Debug(
+		"query finished",
+		zap.String("query", query),
+		zap.Reflect("args", args),
+		zap.Duration("duration", d),
+		zap.Error(err),
+	)
 }

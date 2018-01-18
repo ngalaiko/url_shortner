@@ -10,7 +10,6 @@ import (
 	"github.com/ngalayko/url_shortner/server/config"
 	"github.com/ngalayko/url_shortner/server/dao"
 	"github.com/ngalayko/url_shortner/server/dao/migrate"
-	"github.com/ngalayko/url_shortner/server/dao/tables"
 	"github.com/ngalayko/url_shortner/server/facebook"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/services/links"
@@ -34,7 +33,6 @@ var (
 		config.NewContext,
 		cache.NewContext,
 		dao.NewContext,
-		tables.NewContext,
 		migrate.NewContext,
 		links.NewContext,
 		users.NewContext,

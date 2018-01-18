@@ -4,12 +4,15 @@ import (
 	"time"
 )
 
+//go:generate reform
+
+//reform:migrations
 type migration struct {
-	ID        uint      `db:"id"`
-	Name      string    `db:"name"`
-	RawSQL    string    `db:"-"`
-	FlushSQL  string    `db:"-"`
-	AppliedAt time.Time `db:"applied_at"`
+	ID        uint      `reform:"id,pk"`
+	Name      string    `reform:"name"`
+	RawSQL    string    `reform:"-"`
+	FlushSQL  string    `reform:"-"`
+	AppliedAt time.Time `reform:"applied_at"`
 }
 
 func initMigrations() []*migration {
@@ -112,6 +115,12 @@ func migrations() []*migration {
 			Name: "drop index links.links_user_id_url_unique_ix",
 			RawSQL: `
 				DROP INDEX links_user_id_url_unique_ix
+			`,
+		},
+		{
+			Name: "create links.user_id_url_not_deleted_unique_ix",
+			RawSQL: `
+				CREATE UNIQUE INDEX user_id_url_not_deleted_unique_ix ON links(user_id, url) WHERE deleted_at IS NULL
 			`,
 		},
 	}

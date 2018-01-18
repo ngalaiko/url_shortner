@@ -8,12 +8,6 @@
   version = "v2.1.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/jmoiron/sqlx"
-  packages = [".","reflectx"]
-  revision = "d9bd385d68c068f1fabb5057e3dedcbcbb039d0f"
-
-[[projects]]
   name = "github.com/klauspost/compress"
   packages = ["flate","gzip","zlib"]
   revision = "6c8db69c4b49dd4df1fff66996cf556176d0b9bf"
@@ -74,6 +68,12 @@
   revision = "20d25e2804050c1cd24a7eea1e7a6447dd0e74ec"
 
 [[projects]]
+  name = "gopkg.in/reform.v1"
+  packages = [".","dialects/postgresql","parse"]
+  revision = "161dee950cbd38085dac33c87ef81140f2da99cc"
+  version = "v1.3.1"
+
+[[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -82,6 +82,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "113a8cdf68f302d9a38b79ed7ef5c57282d5c9ff67142b0952d3fb77bb989633"
+  inputs-digest = "77d058091c9dff0170df3dbfb11c9193c04386c29c92459d8dad7c656fe2b3c4"
   solver-name = "gps-cdcl"
   solver-version = 1
