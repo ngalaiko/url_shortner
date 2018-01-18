@@ -118,9 +118,9 @@ func migrations() []*migration {
 			`,
 		},
 		{
-			Name: "create links.user_id_url_not_deleted_unique_ix",
+			Name: "create links.user_id_url_not_deleted_not_anon_unique_ix",
 			RawSQL: `
-				CREATE UNIQUE INDEX user_id_url_not_deleted_unique_ix ON links(user_id, url) WHERE deleted_at IS NULL
+				CREATE UNIQUE INDEX user_id_url_not_deleted_not_anon_unique_ix ON links(user_id, url) WHERE deleted_at IS NULL AND user_id > 0
 			`,
 		},
 	}

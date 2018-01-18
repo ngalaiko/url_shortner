@@ -63,12 +63,15 @@ func (s *TestLinksSuite) Test_CreateLink__should_create_link(c *C) {
 }
 
 func (s *TestLinksSuite) Test_CreateLink__should_return_new_link_for_anon_user(c *C) {
-	link1, err := s.createLink()
+	link1, err := s.createLink(
+		withUserID(0),
+	)
 	if err != nil {
 		c.Fatal(err)
 	}
 
 	link2, err := s.createLink(
+		withUserID(0),
 		withUrl(link1.URL),
 	)
 	if err != nil {
