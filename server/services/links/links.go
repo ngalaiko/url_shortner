@@ -82,10 +82,8 @@ func (l *Service) CreateLink(link *schema.Link) error {
 	existed, err := l.queryLinkByURlAndUserID(link.URL, link.UserID)
 	switch {
 	case err == sql.ErrNoRows:
-		fmt.Println("not found")
 
 	case err == nil:
-		fmt.Println("found")
 		*link = *existed
 		return nil
 
@@ -146,6 +144,10 @@ func (l *Service) queryLinkByURlAndUserID(url string, userID uint64) (*schema.Li
 	}
 
 	if !link.Valid() {
+		return nil, sql.ErrNoRows
+	}
+
+	if link.Anonim() {
 		return nil, sql.ErrNoRows
 	}
 

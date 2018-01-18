@@ -21,8 +21,8 @@ type TestLinksSuite struct {
 
 	service *Service
 
-	usersCount int
-	linksCount int
+	linksCount uint64
+	usersCount uint64
 }
 
 func Test(t *testing.T) { TestingT(t) }
@@ -62,7 +62,7 @@ func (s *TestLinksSuite) Test_CreateLink__should_create_link(c *C) {
 	c.Assert(err, IsNil)
 }
 
-func (s *TestLinksSuite) Test_CreateLink__should_return_existing_link(c *C) {
+func (s *TestLinksSuite) Test_CreateLink__should_return_new_link_for_anon_user(c *C) {
 	link1, err := s.createLink()
 	if err != nil {
 		c.Fatal(err)
@@ -70,6 +70,27 @@ func (s *TestLinksSuite) Test_CreateLink__should_return_existing_link(c *C) {
 
 	link2, err := s.createLink(
 		withUrl(link1.URL),
+	)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	c.Assert(link1.ID, Not(Equals), link2.ID)
+}
+
+func (s *TestLinksSuite) Test_CreateLink__should_return_same_link_if_exists_for_not_anon_user(c *C) {
+	userId := uint64(1)
+
+	link1, err := s.createLink(
+		withUserID(userId),
+	)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	link2, err := s.createLink(
+		withUrl(link1.URL),
+		withUserID(userId),
 	)
 	if err != nil {
 		c.Fatal(err)
@@ -78,36 +99,7 @@ func (s *TestLinksSuite) Test_CreateLink__should_return_existing_link(c *C) {
 	c.Assert(link1.ID, Equals, link2.ID)
 }
 
-func (s *TestLinksSuite) Test_CreateLink__should_return_link_if_not_valid_exists(c *C) {
-	link1, err := s.createLink()
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	if err := s.service.deleteLink(link1); err != nil {
-		c.Fatal(err)
-	}
-
-	link2, err := s.createLink(
-		withUrl(link1.URL),
-	)
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	link3, err := s.createLink(
-		withUrl(link1.URL),
-	)
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	c.Assert(link1.ID, Not(Equals), link2.ID)
-	c.Assert(link3.ID, Equals, link2.ID)
-}
-
 func (s *TestLinksSuite) Test_prepareLink__should_set_schema(c *C) {
-
 	url := "vk.com"
 
 	link := &schema.Link{
@@ -122,7 +114,6 @@ func (s *TestLinksSuite) Test_prepareLink__should_set_schema(c *C) {
 }
 
 func (s *TestLinksSuite) Test_prepareLink__should_not_set_schema(c *C) {
-
 	url := "https://vk.com"
 
 	link := &schema.Link{
@@ -137,7 +128,6 @@ func (s *TestLinksSuite) Test_prepareLink__should_not_set_schema(c *C) {
 }
 
 func (s *TestLinksSuite) Test_prepareLink__should_set_created_at_expired_at(c *C) {
-
 	link := &schema.Link{
 		URL: "vk.com",
 	}
@@ -151,7 +141,6 @@ func (s *TestLinksSuite) Test_prepareLink__should_set_created_at_expired_at(c *C
 }
 
 func (s *TestLinksSuite) Test_prepareLink__should_create_short_uri(c *C) {
-
 	link := &schema.Link{
 		URL: "vk.com",
 	}
@@ -164,7 +153,6 @@ func (s *TestLinksSuite) Test_prepareLink__should_create_short_uri(c *C) {
 }
 
 func (s *TestLinksSuite) Test_prepareLink__should_not_validate_url(c *C) {
-
 	link := &schema.Link{
 		URL: "http//vk.com",
 	}
@@ -176,9 +164,14 @@ func (s *TestLinksSuite) Test_prepareLink__should_not_validate_url(c *C) {
 // helpers
 
 func (s *TestLinksSuite) createLink(opts ...optionFunc) (*schema.Link, error) {
+	user, err := s.createUser()
+	if err != nil {
+		return nil, err
+	}
 
 	link := &schema.Link{
-		URL: fmt.Sprintf("http://vk.com/%d", s.linksCount),
+		UserID: user.ID,
+		URL:    fmt.Sprintf("http://vk.com/%d", s.linksCount),
 	}
 
 	for _, opt := range opts {
@@ -193,10 +186,31 @@ func (s *TestLinksSuite) createLink(opts ...optionFunc) (*schema.Link, error) {
 	return link, nil
 }
 
+func (s *TestLinksSuite) createUser() (*schema.User, error) {
+	user := &schema.User{
+		FirstName:  fmt.Sprintf("name %d", s.usersCount),
+		LastName:   fmt.Sprintf("last name %d", s.usersCount),
+		FacebookID: fmt.Sprintf("facebook id %d", s.usersCount),
+	}
+
+	if err := s.service.db.Insert(user); err != nil {
+		return nil, err
+	}
+
+	s.usersCount++
+	return user, nil
+}
+
 type optionFunc func(*schema.Link)
 
 func withUrl(url string) optionFunc {
 	return func(l *schema.Link) {
 		l.URL = url
+	}
+}
+
+func withUserID(id uint64) optionFunc {
+	return func(l *schema.Link) {
+		l.UserID = id
 	}
 }

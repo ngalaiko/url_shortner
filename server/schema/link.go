@@ -34,3 +34,7 @@ func (l *Link) Valid() bool {
 		return true
 	}
 }
+
+func (l *Link) Anonim() bool {
+	return l.UserID == uint64(0)
+}
