@@ -11,16 +11,34 @@
                     "&response_type=code"
                 );
             }
+            function logout() {
+                let cookie_name = 'token';
+                document.cookie = 'token' + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+                window.location.reload();
+            }
         </script>
     </head>
     <body>
+        <nav class="navbar navbar-inverse">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="#">Url Shortner</a>
+                </div>
+        {{ if .User }}
+            <ul class="nav navbar-nav navbar-right">
+                <li class="navbar-text">{{ $.User.FirstName }} {{ $.User.LastName }}</li>
+                <li><button class="btn btn-danger navbar-btn" onclick="logout()">Logout</button></li>
+            </ul>
+        {{ else }}
+            <button class="btn" onclick="redirectAuth()" style="left: 80%; position: relative;">Login with Facebook</button>
+        {{ end }}
+            </div>
+        </nav>
         <nav class="navbar navbar-inverse navbar-fixed-top">
             {{ if $.User }}
             <div class="container">
-                <div class="navbar-text navbar-right">{{ $.User.FirstName }} {{ $.User.LastName }}</div>
             </div>
             {{ else }}
-            <button class="btn" onclick="redirectAuth()" style="left: 80%; position: relative;">Login with Facebook</button>
             {{ end }}
         </nav>
         <div class="container" style="width: 50%; top: 30%; position: relative;">
