@@ -3,15 +3,12 @@ package links
 import (
 	"context"
 	"fmt"
-	"log"
 	"testing"
 
 	. "gopkg.in/check.v1"
 
-	"github.com/ngalayko/url_shortner/server/cache"
 	"github.com/ngalayko/url_shortner/server/config"
-	"github.com/ngalayko/url_shortner/server/dao/migrate"
-	"github.com/ngalayko/url_shortner/server/logger"
+	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/schema"
 )
 
@@ -34,25 +31,7 @@ func (s *TestLinksSuite) SetUpSuite(c *C) {
 	suite = &TestLinksSuite{
 		ctx: context.Background(),
 	}
-
-	s.init()
-
-	m := migrate.FromContext(s.ctx)
-	if err := m.Flush(); err != nil {
-		c.Fatal(err)
-	}
-
-	if err := m.Apply(); err != nil {
-		log.Panicf("error applying migrations: %s", err)
-	}
-}
-
-func (s *TestLinksSuite) init() {
-	s.ctx = cache.NewContext(nil, cache.NewStubCache())
-	s.ctx = logger.NewContext(s.ctx, logger.NewTestLogger())
 	s.ctx = config.NewContext(s.ctx, config.NewTestConfig())
-	s.ctx = migrate.NewContext(s.ctx, nil)
-
 	s.service = FromContext(s.ctx)
 }
 
@@ -179,7 +158,7 @@ func (s *TestLinksSuite) createUser() (*schema.User, error) {
 	user := &schema.User{
 		FirstName:  fmt.Sprintf("name %d", s.usersCount),
 		LastName:   fmt.Sprintf("last name %d", s.usersCount),
-		FacebookID: fmt.Sprintf("facebook id %d", s.usersCount),
+		FacebookID: fmt.Sprintf("facebook id %d", helpers.RandomString(5)),
 	}
 
 	if err := s.service.db.Insert(user); err != nil {

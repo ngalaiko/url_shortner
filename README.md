@@ -12,6 +12,7 @@
 8) bootstrap ui **IN PROGRESS**
 9) social auth **DONE**
 10) refactor database module, get rid of generation (have bug for unuthorized user that not easy to fix with it) **DONE**
-11) log off button
+11) log off button 
 12) not found page
 13) error page
+14) make single tests context
