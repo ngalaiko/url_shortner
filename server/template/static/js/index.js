@@ -21,12 +21,11 @@ function showShortUrl(data) {
     document.getElementById('shortUrl').value = "https:" + link ;
 }
 function logout() {
-    fetch {"/logout",
+    fetch("/logout",
         {
             method: "GET",
             credentials: 'include'
         })
         .then(window.location.reload())
-    }
 }
 
