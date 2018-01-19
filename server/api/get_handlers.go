@@ -26,7 +26,10 @@ func (a *Api) getHandlers(appCtx context.Context, ctx *Ctx) {
 		a.responseHtml(ctx, data)
 
 	case requestUrl == "/logout":
-		a.deleteUserCookie(ctx.RequestCtx)
+		if err := a.deleteUserCookie(ctx); err != nil {
+			a.responseErr(ctx, err)
+			return
+		}
 
 	case strings.HasPrefix(requestUrl, facebookLoginRequestURI):
 		user, err := a.authorizeUser(ctx.RequestCtx)

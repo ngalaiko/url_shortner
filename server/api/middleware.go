@@ -64,8 +64,18 @@ func (a *Api) getUserFromCookie(ctx *fasthttp.RequestCtx) (*schema.User, error) 
 	return a.users.QueryUserById(userToken.UserID)
 }
 
-func (a *Api) deleteUserCookie(ctx *fasthttp.RequestCtx) {
+func (a *Api) deleteUserCookie(ctx *Ctx) error {
+	if !ctx.Authorized() {
+		return nil
+	}
+
+	token := ctx.Request.Header.Cookie(userTokenCookie)
+	if err := a.userTokens.DeleteUserToken(ctx.User.ID, string(token)); err != nil {
+		return err
+	}
 	ctx.Response.Header.DelClientCookie(userTokenCookie)
+
+	return nil
 }
 
 func (a *Api) setUserCookie(ctx *fasthttp.RequestCtx, user *schema.User) error {
