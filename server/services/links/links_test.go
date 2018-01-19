@@ -129,6 +129,25 @@ func (s *TestLinksSuite) Test_prepareLink__should_not_validate_url(c *C) {
 	c.Assert(err, NotNil)
 }
 
+func (s *TestLinksSuite) Test_QueryLinksByUser__should_not_query_deleted_links(c *C) {
+	link, err := s.createLink()
+	c.Assert(err, IsNil)
+
+	deletedLink, err := s.createLink(
+		withUserID(link.UserID),
+	)
+	c.Assert(err, IsNil)
+
+	if err := s.service.deleteLink(deletedLink); err != nil {
+		c.Fatal(err)
+	}
+
+	links, err := s.service.QueryLinksByUser(link.UserID)
+	c.Assert(err, IsNil)
+
+	c.Assert(1, Equals, len(links))
+}
+
 // helpers
 
 func (s *TestLinksSuite) createLink(opts ...optionFunc) (*schema.Link, error) {

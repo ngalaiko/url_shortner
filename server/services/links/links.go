@@ -154,7 +154,7 @@ func (l *Service) queryLinkByURlAndUserID(url string, userID uint64) (*schema.Li
 
 // QueryLinkByShortUrl returns link by short url
 func (l *Service) QueryLinksByUser(userID uint64) ([]*schema.Link, error) {
-	rows, err := l.db.SelectRows(schema.LinkTable, "user_id", userID)
+	rows, err := l.db.FindRows(schema.LinkTable, "user_id", userID)
 	if err != nil {
 		return nil, err
 	}
@@ -167,6 +167,10 @@ func (l *Service) QueryLinksByUser(userID uint64) ([]*schema.Link, error) {
 		if err := l.db.NextRow(link, rows); err != nil {
 			break
 		}
+		if !link.Valid() {
+			continue
+		}
+
 		links = append(links, link)
 	}
 

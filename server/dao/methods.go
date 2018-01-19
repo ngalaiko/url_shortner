@@ -59,6 +59,11 @@ func (t *Db) SelectOneTo(str reform.Struct, tail string, args ...interface{}) er
 	return t.db.SelectOneTo(str, tail, args...)
 }
 
+// FindRows return rows by column
+func (t *Db) FindRows(view reform.View, column string, arg interface{}) (*sql.Rows, error) {
+	return t.db.FindRows(view, column, arg)
+}
+
 // SelectRows return sql.Rows by query
 func (t *Db) SelectRows(view reform.View, tail string, args ...interface{}) (*sql.Rows, error) {
 	return t.db.SelectRows(view, tail, args...)
