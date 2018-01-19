@@ -124,6 +124,7 @@ func (m *Migrate) applied() (map[string]*migration, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	result := map[string]*migration{}
 	for {

@@ -11,6 +11,7 @@ import (
 
 	_ "github.com/lib/pq"
 
+	"github.com/ngalayko/url_shortner/server/cache"
 	"github.com/ngalayko/url_shortner/server/config"
 	"github.com/ngalayko/url_shortner/server/logger"
 )
@@ -23,30 +24,8 @@ type dbCtxKey string
 
 // Db is a database service
 type Db struct {
-	*reform.DB
-	config config.DbConfig
-}
-
-// NewContext stores Db in context
-func NewContext(ctx context.Context, db interface{}) context.Context {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
-	if _, ok := db.(*Db); !ok {
-		db = newDb(ctx)
-	}
-
-	return context.WithValue(ctx, ctxKey, db)
-}
-
-// FromContext return Db from context
-func FromContext(ctx context.Context) *Db {
-	if db, ok := ctx.Value(ctxKey).(*Db); ok {
-		return db
-	}
-
-	return newDb(ctx)
+	db    *reform.DB
+	cache cache.ICache
 }
 
 func newDb(ctx context.Context) *Db {
@@ -54,6 +33,7 @@ func newDb(ctx context.Context) *Db {
 	l := logger.FromContext(ctx)
 
 	db := newDbHelper(cfg, l)
+	db.cache = cache.FromContext(ctx)
 
 	l.Info("db connection created",
 		zap.String("driver", cfg.Driver),
@@ -76,7 +56,7 @@ func newDbHelper(cfg config.DbConfig, logger logger.ILogger) *Db {
 	conn.SetMaxOpenConns(cfg.MaxOpenConns)
 
 	return &Db{
-		DB: reform.NewDB(conn, postgresql.Dialect, newDbLogger(logger)),
+		db: reform.NewDB(conn, postgresql.Dialect, newDbLogger(logger)),
 	}
 }
 
