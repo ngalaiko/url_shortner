@@ -3,6 +3,7 @@ package user_token
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/ngalayko/url_shortner/server/dao"
@@ -31,14 +32,12 @@ func newTokens(ctx context.Context) *Service {
 
 // GetUserToken returns token
 func (t *Service) GetUserToken(token string) (*schema.UserToken, error) {
-
 	if len(token) == 0 {
 		return nil, sql.ErrNoRows
 	}
 
 	userToken := &schema.UserToken{}
-	err := t.db.FindOneTo(userToken, "token", token)
-	if err != nil {
+	if err := t.db.FindOneTo(userToken, "token", token); err != nil {
 		return nil, err
 	}
 
@@ -51,7 +50,6 @@ func (t *Service) GetUserToken(token string) (*schema.UserToken, error) {
 
 // CreateUserToken created userToken for user
 func (t *Service) CreateUserToken(user *schema.User) (*schema.UserToken, error) {
-
 	token := &schema.UserToken{
 		UserID:    user.ID,
 		ExpiredAt: time.Now().Add(defaultExpiredTime),
@@ -63,4 +61,26 @@ func (t *Service) CreateUserToken(user *schema.User) (*schema.UserToken, error) 
 	}
 
 	return token, nil
+}
+
+// DeleteUserToken
+func (t *Service) DeleteUserToken(userID uint64, token string) error {
+	userToken := &schema.UserToken{}
+	tail := fmt.Sprintf(`
+		WHERE
+			token = %s AND
+			user_id = %s
+	`, t.db.Placeholder(1), t.db.Placeholder(2))
+
+	err := t.db.SelectOneTo(userToken, tail, token, userID)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil
+
+	case err != nil:
+		return err
+	}
+
+	userToken.ExpiredAt = time.Unix(0, 0).UTC()
+	return t.db.Update(userToken)
 }
