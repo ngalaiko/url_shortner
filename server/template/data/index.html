@@ -24,22 +24,15 @@
                 <div class="navbar-header">
                     <a class="navbar-brand" href="#">Url Shortner</a>
                 </div>
-        {{ if .User }}
             <ul class="nav navbar-nav navbar-right">
+        {{ if .User }}
                 <li class="navbar-text">{{ $.User.FirstName }} {{ $.User.LastName }}</li>
                 <li><button class="btn btn-danger navbar-btn" onclick="logout()">Logout</button></li>
-            </ul>
         {{ else }}
-            <button class="btn" onclick="redirectAuth()" style="left: 80%; position: relative;">Login with Facebook</button>
+                <li><button class="btn navbar-btn" onclick="redirectAuth()" style="left: 80%; position: relative;">Login with Facebook</button></li>
         {{ end }}
+            </ul>
             </div>
-        </nav>
-        <nav class="navbar navbar-inverse navbar-fixed-top">
-            {{ if $.User }}
-            <div class="container">
-            </div>
-            {{ else }}
-            {{ end }}
         </nav>
         <div class="container" style="width: 50%; top: 30%; position: relative;">
             {{ with .Errors }}
