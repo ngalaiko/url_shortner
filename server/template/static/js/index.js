@@ -26,6 +26,6 @@ function logout() {
             method: "GET",
             credentials: 'include'
         })
-        .then(window.location.reload())
+        .then(function(res){ window.location.reload();  })
 }
 

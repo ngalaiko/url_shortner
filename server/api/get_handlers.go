@@ -27,7 +27,6 @@ func (a *Api) getHandlers(appCtx context.Context, ctx *Ctx) {
 
 	case requestUrl == "/logout":
 		a.deleteUserCookie(ctx.RequestCtx)
-		a.redirectHome(ctx)
 
 	case strings.HasPrefix(requestUrl, facebookLoginRequestURI):
 		user, err := a.authorizeUser(ctx.RequestCtx)
