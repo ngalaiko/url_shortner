@@ -25,6 +25,10 @@ func (a *Api) getHandlers(appCtx context.Context, ctx *Ctx) {
 
 		a.responseHtml(ctx, data)
 
+	case requestUrl == "/logout":
+		a.deleteUserCookie(ctx.RequestCtx)
+		a.redirectHome(ctx)
+
 	case strings.HasPrefix(requestUrl, facebookLoginRequestURI):
 		user, err := a.authorizeUser(ctx.RequestCtx)
 		if err != nil {
@@ -37,12 +41,16 @@ func (a *Api) getHandlers(appCtx context.Context, ctx *Ctx) {
 			return
 		}
 
-		ctx.RedirectUrl = "https://" + string(ctx.URI().Host())
+		a.redirectHome(ctx)
 
 	default:
 		a.redirectLink(ctx)
 
 	}
+}
+
+func (a *Api) redirectHome(ctx *Ctx) {
+	ctx.RedirectUrl = "https://" + string(ctx.URI().Host())
 }
 
 func (a *Api) renderMainPage(ctx *Ctx) ([]byte, error) {

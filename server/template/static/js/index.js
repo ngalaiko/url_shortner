@@ -20,5 +20,13 @@ function showShortUrl(data) {
     var link = "//" + location.hostname + '/' + data.data.short_url;
     document.getElementById('shortUrl').value = "https:" + link ;
 }
-
+function logout() {
+    fetch {"/logout",
+        {
+            method: "GET",
+            credentials: 'include'
+        })
+        .then(window.location.reload())
+    }
+}
 

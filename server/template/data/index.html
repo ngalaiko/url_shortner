@@ -11,11 +11,6 @@
                     "&response_type=code"
                 );
             }
-            function logout() {
-                let cookie_name = 'token';
-                document.cookie = 'token' + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-                window.location.reload();
-            }
         </script>
     </head>
     <body>
@@ -29,7 +24,7 @@
                 <li class="navbar-text">{{ $.User.FirstName }} {{ $.User.LastName }}</li>
                 <li><button class="btn btn-danger navbar-btn" onclick="logout()">Logout</button></li>
         {{ else }}
-                <li><button class="btn navbar-btn" onclick="redirectAuth()" style="left: 80%; position: relative;">Login with Facebook</button></li>
+                <li><button class="btn navbar-btn" onclick="redirectAuth()">Login with Facebook</button></li>
         {{ end }}
             </ul>
             </div>
