@@ -66,7 +66,6 @@ func (a *Api) getUserFromCookie(ctx *fasthttp.RequestCtx) (*schema.User, error) 
 
 func (a *Api) deleteUserCookie(ctx *fasthttp.RequestCtx) {
 	ctx.Response.Header.DelClientCookie(userTokenCookie)
-	ctx.Response.Header.DelCookie(userTokenCookie)
 }
 
 func (a *Api) setUserCookie(ctx *fasthttp.RequestCtx, user *schema.User) error {

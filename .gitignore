@@ -1,3 +1,4 @@
 server/vendor
 .idea
 server/config.yaml
+server/bin/url_shortner
