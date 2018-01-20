@@ -2,18 +2,4 @@
 
 # TODO:
 
-1) sql db **DONE**
-2) nosql cache **DONE** (maybe add redis for multinodes)
-3) iOS, Android or desktop redirect
-4) stats 
-5) click limit - move this to separate table, (link preferences)
-6) time limit **DONE** 
-7) dockerize **DONE**
-8) bootstrap ui **IN PROGRESS**
-9) social auth **DONE**
-10) refactor database module, get rid of generation (have bug for unuthorized user that not easy to fix with it) **DONE**
-11) log off button **DONE**
-12) not found page
-13) error page
-14) make single tests context
-15) push js with http2
+Please, refer to [Project tab](https://github.com/ngalayko/url_shortner/projects/1?).
