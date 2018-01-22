@@ -58,7 +58,6 @@ func NewApplication() *Application {
 	}
 
 	app.logger = logger.FromContext(app.ctx)
-
 	if err := migrate.FromContext(app.ctx).Apply(); err != nil {
 		app.logger.Panic("error while migrations",
 			zap.Error(err),

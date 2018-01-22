@@ -55,8 +55,21 @@ func (a *Api) redirectHome(ctx *Ctx) {
 	ctx.RedirectUrl = "https://" + string(ctx.URI().Host())
 }
 
-func (a *Api) renderMainPage(ctx *Ctx) ([]byte, error) {
+func (a *Api) renderNotFoundPage(ctx *Ctx) ([]byte, error) {
+	data, err := template.NotFound(
+		template.WithFacebookConfig(a.fbConfig),
+		template.WithUser(ctx.User),
+		template.WithErrors(ctx.Errors),
+		template.WithLinks(ctx.Links...),
+	)
+	if err != nil {
+		return nil, err
+	}
 
+	return data, err
+}
+
+func (a *Api) renderMainPage(ctx *Ctx) ([]byte, error) {
 	data, err := template.Index(
 		template.WithFacebookConfig(a.fbConfig),
 		template.WithUser(ctx.User),
@@ -74,14 +87,14 @@ func (a *Api) redirectLink(ctx *Ctx) {
 	shortUrl := string(ctx.RequestURI())[1:]
 
 	if len(shortUrl) == 0 {
-		ctx.NotFound()
+		a.responseNotFound(ctx)
 		return
 	}
 
 	link, err := a.links.QueryLinkByShortUrl(shortUrl)
 	switch {
 	case err == sql.ErrNoRows:
-		ctx.NotFound()
+		a.responseNotFound(ctx)
 		return
 
 	case err != nil:

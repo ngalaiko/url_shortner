@@ -138,7 +138,7 @@ func (a *Api) initHandler(appCtx context.Context) {
 			a.postHandlers(appCtx, ctx)
 
 		default:
-			requestCtx.NotFound()
+			a.responseNotFound(ctx)
 
 		}
 
@@ -194,4 +194,14 @@ func (a *Api) responseHtml(ctx *Ctx, data []byte) {
 
 func (a *Api) responseBytes(ctx *Ctx, data []byte) {
 	ctx.Response.AppendBody(data)
+}
+
+func (a *Api) responseNotFound(ctx *Ctx) {
+	data, err := a.renderNotFoundPage(ctx)
+	if err != nil {
+		a.responseErr(ctx, err)
+		return
+	}
+
+	a.responseHtml(ctx, data)
 }

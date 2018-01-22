@@ -9,12 +9,16 @@ import (
 )
 
 const (
-	dataPath = "template/data/"
-	index    = "index.html"
+	dataPath         = "template/data/"
+	indexFileName    = "index.html"
+	notFoundFileName = "not_found.html"
+	headFileName     = "head.html"
 )
 
 var (
-	indexTemplate = template.Must(template.New("index").Parse(string(MustAsset(dataPath + index))))
+	headTemplate     = template.Must(template.New("head").Parse(string(MustAsset(dataPath + headFileName))))
+	indexTemplate    = template.Must(template.New("index").Parse(string(MustAsset(dataPath + indexFileName))))
+	notFoundTemplate = template.Must(template.New("notFound").Parse(string(MustAsset(dataPath + notFoundFileName))))
 )
 
 type data struct {
@@ -28,24 +32,60 @@ type data struct {
 // DataFunc is a func to modify template data
 type DataFunc func(*data)
 
-// Index return index.html template
-func Index(dataOps ...DataFunc) ([]byte, error) {
+// head returns head.html template
+func head(d *data) ([]byte, error) {
+	var headBuffer bytes.Buffer
 
-	var (
-		buffer bytes.Buffer
-	)
-
-	d := &data{}
-
-	for _, option := range dataOps {
-		option(d)
-	}
-
-	if err := indexTemplate.Execute(&buffer, d); err != nil {
+	if err := headTemplate.Execute(&headBuffer, d); err != nil {
 		return nil, err
 	}
 
-	return buffer.Bytes(), nil
+	return headBuffer.Bytes(), nil
+}
+
+// NotFound return not found page
+func NotFound(dataOps ...DataFunc) ([]byte, error) {
+	var notFoundBuffer bytes.Buffer
+
+	d := parseOptions(dataOps...)
+
+	headBytes, err := head(d)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := notFoundTemplate.Execute(&notFoundBuffer, d); err != nil {
+		return nil, err
+	}
+
+	return append(headBytes, notFoundBuffer.Bytes()...), nil
+}
+
+// Index return index page
+func Index(dataOps ...DataFunc) ([]byte, error) {
+	var indexBuffer bytes.Buffer
+
+	d := parseOptions(dataOps...)
+
+	headBytes, err := head(d)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := indexTemplate.Execute(&indexBuffer, d); err != nil {
+		return nil, err
+	}
+
+	return append(headBytes, indexBuffer.Bytes()...), nil
+}
+
+func parseOptions(dataOpts ...DataFunc) *data {
+	d := &data{}
+	for _, option := range dataOpts {
+		option(d)
+	}
+
+	return d
 }
 
 // WithFacebookConfig sets template facebook config

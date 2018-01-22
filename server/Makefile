@@ -1,5 +1,5 @@
 
-all: deps tests generate build
+all: deps tests build
 
 .PHONY: generate
 generate:
@@ -7,7 +7,7 @@ generate:
 	go-bindata -o ./template/data.go -pkg template ./template/data/...
 
 .PHONY: build
-build:
+build: generate
 	env GOGC=off go build -o ./bin/url_shortner ./cmd/main.go
 
 .PHONY: build-alpine
