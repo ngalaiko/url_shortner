@@ -6,6 +6,6 @@ SHARED_DIR=/data/shortner
 BIN_PATH=/app/url_shortner
 CONFIG_PATH=/app/config.yaml
 
-mv ${STATIC_DIR} ${SHARED_DIR}
+mv ${STATIC_DIR}/* ${SHARED_DIR}
 
 ${BIN_PATH} --config=${CONFIG_PATH}
