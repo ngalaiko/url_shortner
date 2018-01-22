@@ -10,6 +10,7 @@ import (
 	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/schema"
+	"go.uber.org/zap"
 )
 
 const (
@@ -59,7 +60,9 @@ func (t *Service) CreateUserToken(user *schema.User) (*schema.UserToken, error) 
 	if err := t.db.Insert(token); err != nil {
 		return nil, err
 	}
-
+	t.logger.Info("user token created",
+		zap.Reflect("userToken", token),
+	)
 	return token, nil
 }
 
@@ -82,5 +85,8 @@ func (t *Service) DeleteUserToken(userID uint64, token string) error {
 	}
 
 	userToken.ExpiredAt = time.Unix(0, 0).UTC()
+	t.logger.Info("user token deleted",
+		zap.Reflect("userToken", userToken),
+	)
 	return t.db.Update(userToken)
 }

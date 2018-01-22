@@ -91,6 +91,9 @@ func (l *Service) CreateLink(link *schema.Link) error {
 
 	}
 
+	l.logger.Info("link created",
+		zap.Reflect("link", link),
+	)
 	return l.db.Insert(link)
 }
 
@@ -125,6 +128,9 @@ func (l *Service) QueryLinkByShortUrl(shortUrl string) (*schema.Link, error) {
 
 	l.viewsQueue <- link.ID
 
+	l.logger.Info("link visited",
+		zap.Reflect("link", link),
+	)
 	return link, nil
 }
 
@@ -185,5 +191,8 @@ func (l *Service) deleteLink(link *schema.Link) error {
 	link.DeletedAt = new(time.Time)
 	*link.DeletedAt = time.Now()
 
+	l.logger.Info("link deleted",
+		zap.Reflect("link", link),
+	)
 	return l.db.Update(link)
 }

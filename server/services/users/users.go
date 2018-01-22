@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/ngalayko/url_shortner/server/dao"
 	"github.com/ngalayko/url_shortner/server/facebook"
 	"github.com/ngalayko/url_shortner/server/logger"
@@ -70,5 +72,8 @@ func (u *Service) QueryUserByFacebookUser(facebookUser *facebook.User) (*schema.
 		return nil, err
 	}
 
+	u.logger.Info("user created",
+		zap.Reflect("user", user),
+	)
 	return user, nil
 }

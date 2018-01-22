@@ -61,8 +61,7 @@
   packages = ["syncmap"]
   revision = "f52d1811a62927559de87708c8913c1650ce4f26"
 
-[[projects]]
-  branch = "v1"
+[[projects]] branch = "v1"
   name = "gopkg.in/check.v1"
   packages = ["."]
   revision = "20d25e2804050c1cd24a7eea1e7a6447dd0e74ec"
