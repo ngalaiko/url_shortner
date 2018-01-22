@@ -12,13 +12,15 @@ const (
 	dataPath         = "template/data/"
 	indexFileName    = "index.html"
 	notFoundFileName = "not_found.html"
-	headFileName     = "head.html"
+	headerFileName   = "header.html"
+	footerFileName   = "footer.html"
 )
 
 var (
-	headTemplate     = template.Must(template.New("head").Parse(string(MustAsset(dataPath + headFileName))))
+	headerTemplate   = template.Must(template.New("header").Parse(string(MustAsset(dataPath + headerFileName))))
 	indexTemplate    = template.Must(template.New("index").Parse(string(MustAsset(dataPath + indexFileName))))
 	notFoundTemplate = template.Must(template.New("notFound").Parse(string(MustAsset(dataPath + notFoundFileName))))
+	footerTemplate   = template.Must(template.New("footer").Parse(string(MustAsset(dataPath + footerFileName))))
 )
 
 type data struct {
@@ -32,15 +34,26 @@ type data struct {
 // DataFunc is a func to modify template data
 type DataFunc func(*data)
 
-// head returns head.html template
-func head(d *data) ([]byte, error) {
-	var headBuffer bytes.Buffer
+// header returns header html
+func header(d *data) ([]byte, error) {
+	var headerBuffer bytes.Buffer
 
-	if err := headTemplate.Execute(&headBuffer, d); err != nil {
+	if err := headerTemplate.Execute(&headerBuffer, d); err != nil {
 		return nil, err
 	}
 
-	return headBuffer.Bytes(), nil
+	return headerBuffer.Bytes(), nil
+}
+
+// footer return footer html
+func footer(d *data) ([]byte, error) {
+	var footerBuffer bytes.Buffer
+
+	if err := footerTemplate.Execute(&footerBuffer, d); err != nil {
+		return nil, err
+	}
+
+	return footerBuffer.Bytes(), nil
 }
 
 // NotFound return not found page
@@ -49,7 +62,12 @@ func NotFound(dataOps ...DataFunc) ([]byte, error) {
 
 	d := parseOptions(dataOps...)
 
-	headBytes, err := head(d)
+	headerBytes, err := header(d)
+	if err != nil {
+		return nil, err
+	}
+
+	footerBytes, err := footer(d)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +76,7 @@ func NotFound(dataOps ...DataFunc) ([]byte, error) {
 		return nil, err
 	}
 
-	return append(headBytes, notFoundBuffer.Bytes()...), nil
+	return concatBytes(headerBytes, notFoundBuffer.Bytes(), footerBytes), nil
 }
 
 // Index return index page
@@ -67,7 +85,12 @@ func Index(dataOps ...DataFunc) ([]byte, error) {
 
 	d := parseOptions(dataOps...)
 
-	headBytes, err := head(d)
+	headerBytes, err := header(d)
+	if err != nil {
+		return nil, err
+	}
+
+	footerBytes, err := footer(d)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +99,16 @@ func Index(dataOps ...DataFunc) ([]byte, error) {
 		return nil, err
 	}
 
-	return append(headBytes, indexBuffer.Bytes()...), nil
+	return concatBytes(headerBytes, indexBuffer.Bytes(), footerBytes), nil
+}
+
+func concatBytes(bb ...[]byte) []byte {
+	buffer := &bytes.Buffer{}
+	for _, b := range bb {
+		buffer.Write(b)
+	}
+
+	return buffer.Bytes()
 }
 
 func parseOptions(dataOpts ...DataFunc) *data {
