@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/valyala/fasthttp"
+	"go.uber.org/zap"
 
 	"github.com/ngalayko/url_shortner/server/schema"
 )
@@ -26,6 +27,10 @@ func (a *Api) NewCtx(requestCtx *fasthttp.RequestCtx) (*Ctx, error) {
 		return ctx, err
 
 	default:
+		a.logger.Info("query user from cookie",
+			zap.Reflect("user", user),
+		)
+
 		ctx.User = user
 
 		ctx.Links, err = a.links.QueryLinksByUser(user.ID)
@@ -53,7 +58,6 @@ func (a *Api) authorizeUser(ctx *fasthttp.RequestCtx) (*schema.User, error) {
 }
 
 func (a *Api) getUserFromCookie(ctx *fasthttp.RequestCtx) (*schema.User, error) {
-
 	token := ctx.Request.Header.Cookie(userTokenCookie)
 
 	userToken, err := a.userTokens.GetUserToken(string(token))
@@ -61,6 +65,10 @@ func (a *Api) getUserFromCookie(ctx *fasthttp.RequestCtx) (*schema.User, error) 
 		return nil, err
 	}
 
+	a.logger.Info("user token from cookie",
+		zap.Reflect("user token", userToken),
+		zap.ByteString("cookie", token),
+	)
 	return a.users.QueryUserById(userToken.UserID)
 }
 
@@ -79,7 +87,6 @@ func (a *Api) deleteUserCookie(ctx *Ctx) error {
 }
 
 func (a *Api) setUserCookie(ctx *fasthttp.RequestCtx, user *schema.User) error {
-
 	userToken, err := a.userTokens.CreateUserToken(user)
 	if err != nil {
 		return err

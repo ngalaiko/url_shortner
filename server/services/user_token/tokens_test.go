@@ -66,6 +66,11 @@ func (s *TestTokensSuite) Test_DeleteUserToken__should_delete_user_token(c *C) {
 	c.Assert(err, Equals, sql.ErrNoRows)
 }
 
+func (s *TestTokensSuite) Test_GetUserToken__should_return_not_found_by_empty_token(c *C) {
+	_, err := s.service.GetUserToken("")
+	c.Assert(err, Equals, sql.ErrNoRows)
+}
+
 // helpers
 
 func (s *TestTokensSuite) createToken() (*schema.UserToken, error) {

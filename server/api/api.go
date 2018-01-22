@@ -150,7 +150,6 @@ func (a *Api) initHandler(appCtx context.Context) {
 			zap.ByteString("method", ctx.Method()),
 			zap.ByteString("url", ctx.RequestURI()),
 			zap.ByteString("body", ctx.PostBody()),
-			zap.Bool("authorized", ctx.Authorized()),
 			zap.Reflect("user", ctx.User),
 			zap.Duration("duration", time.Since(start)),
 		)
