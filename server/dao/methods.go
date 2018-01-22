@@ -31,11 +31,6 @@ func (t *Db) Update(record reform.Record) error {
 
 // FindByPrimaryKeyTo finds first recoed by pk
 func (t *Db) FindByPrimaryKeyTo(record reform.Record, pk interface{}) error {
-	fromCache, ok := t.cache.Load(cacheKeyWithValue(record, pk))
-	if ok {
-		record = fromCache.(reform.Record)
-		return nil
-	}
 	return t.db.FindByPrimaryKeyTo(record, pk)
 }
 
