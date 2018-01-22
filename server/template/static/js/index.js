@@ -1,3 +1,4 @@
+// js for https://shortner.galako.rocks 
 function getShortUrl() {
     var payload = {
         url: document.getElementById('inputUrl').value
