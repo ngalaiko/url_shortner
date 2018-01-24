@@ -106,14 +106,26 @@ func (l *Service) incrementNextLink(linkId uint64) error {
 }
 
 // TransferLinks transfer links from anon user to new user
-func (l *Service) TransferLinks(userID uint64, links ...*schema.Link) error {
-	if len(links) == 0 {
+func (l *Service) TransferLinks(userID uint64, linkIDs ...uint64) error {
+	if len(linkIDs) == 0 {
 		return nil
 	}
 
-	for _, link := range links {
-		link.UserID = userID
-		l.transferQueue <- link
+	args := make([]interface{}, len(linkIDs))
+	for i := range linkIDs {
+		args[i] = linkIDs[i]
+	}
+
+	links, err := l.db.FindAllFrom(schema.LinkTable, "id", args...)
+	if err != nil {
+		return err
+	}
+
+	for _, str := range links {
+		if link, ok := str.(*schema.Link); ok {
+			link.UserID = userID
+			l.transferQueue <- link
+		}
 	}
 
 	return nil

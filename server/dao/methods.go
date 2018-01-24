@@ -52,6 +52,30 @@ func (t *Db) FindOneTo(str reform.Struct, column string, arg interface{}) error 
 	return t.db.FindOneTo(str, column, arg)
 }
 
+// FindAllFrom returns all records from db By field
+func (t *Db) FindAllFrom(view reform.View, column string, args ...interface{}) ([]reform.Struct, error) {
+	fromCache := make([]reform.Struct, 0, 0)
+	for _, arg := range args {
+		found, ok := t.cache.Load(cacheKeyStringInterface(column, arg))
+		if !ok {
+			continue
+		}
+
+		if foundStruct, ok := found.(reform.Struct); ok {
+			fromCache = append(fromCache, foundStruct)
+		}
+	}
+	if len(fromCache) == len(args) {
+		return fromCache, nil
+	}
+
+	fromDb, err := t.db.FindAllFrom(view, column, args...)
+	if err != nil {
+		return nil, err
+	}
+	return append(fromCache, fromDb...), nil
+}
+
 // Exec executes query with args
 func (t *Db) Exec(query string, args ...interface{}) (sql.Result, error) {
 	return t.db.Exec(query, args...)

@@ -37,11 +37,22 @@ func (a *Api) NewCtx(requestCtx *fasthttp.RequestCtx) (*Ctx, error) {
 		if err != nil {
 			ctx.AddError(err)
 		}
+
+		if err := a.links.TransferLinks(user.ID, ctx.Session.LinkIDs...); err != nil {
+			return ctx, err
+		}
+
+		ctx.Session.LinkIDs = []uint64{}
+		if err := a.sessions.Update(ctx.Session); err != nil {
+			return ctx, err
+		}
+
+		return ctx, nil
 	}
 
 	ctx.Session, err = a.getSession(requestCtx)
 	if err != nil {
-		return nil, err
+		return ctx, err
 	}
 
 	return ctx, nil

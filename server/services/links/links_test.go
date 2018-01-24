@@ -155,7 +155,7 @@ func (s *TestLinksSuite) Test_TransferLinks__should_change_links_owner(c *C) {
 	link, err := s.createLink()
 	c.Assert(err, IsNil)
 
-	if err := s.service.TransferLinks(user.ID, link); err != nil {
+	if err := s.service.TransferLinks(user.ID, link.ID); err != nil {
 		c.Fatal(err)
 	}
 
