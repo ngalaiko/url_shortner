@@ -52,7 +52,7 @@ func (s *TestUsersSuite) createUser() (*schema.User, error) {
 	user := &schema.User{
 		FirstName:  fmt.Sprintf("name %d", s.usersCount),
 		LastName:   fmt.Sprintf("last name %d", s.usersCount),
-		FacebookID: fmt.Sprintf("facebook id %d", helpers.RandomString(5)),
+		FacebookID: fmt.Sprintf("facebook id %s", helpers.RandomString(5)),
 	}
 
 	if err := s.service.db.Insert(user); err != nil {

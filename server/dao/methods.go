@@ -3,6 +3,7 @@ package dao
 import (
 	"database/sql"
 	"fmt"
+	"reflect"
 
 	reform "gopkg.in/reform.v1"
 )
@@ -31,6 +32,12 @@ func (t *Db) Update(record reform.Record) error {
 
 // FindByPrimaryKeyTo finds first recoed by pk
 func (t *Db) FindByPrimaryKeyTo(record reform.Record, pk interface{}) error {
+	if fromCache, ok := t.cache.Load(cacheKeyWithValue(record, pk)); ok {
+		cacheValue := reflect.ValueOf(fromCache).Elem()
+		recordValue := reflect.ValueOf(record).Elem()
+		recordValue.Set(cacheValue)
+		return nil
+	}
 	return t.db.FindByPrimaryKeyTo(record, pk)
 }
 
@@ -74,7 +81,7 @@ func (t *Db) InTransaction(f func(*reform.TX) error) error {
 }
 
 func cacheKeyWithValue(record reform.Record, pk interface{}) string {
-	return fmt.Sprintf("%s%s", record.View().Name(), pk)
+	return fmt.Sprintf("%s%v", record.View().Name(), pk)
 }
 
 func cacheKey(record reform.Record) string {
