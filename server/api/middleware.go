@@ -78,7 +78,7 @@ func (a *Api) getSession(ctx *fasthttp.RequestCtx) (*schema.Session, error) {
 
 	sessionCookie := fasthttp.AcquireCookie()
 	sessionCookie.SetKey(sessionCookieName)
-	sessionCookie.SetValue(sessionKey)
+	sessionCookie.SetValue(s.Key)
 	sessionCookie.SetDomainBytes(ctx.URI().Host())
 	sessionCookie.SetSecure(true)
 	sessionCookie.SetHTTPOnly(true)
