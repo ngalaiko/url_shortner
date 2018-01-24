@@ -17,7 +17,7 @@ const (
 )
 
 // NewCtx from request ctx
-func (a *Api) NewCtx(requestCtx *fasthttp.RequestCtx) (*Ctx, error) {
+func (a *API) NewCtx(requestCtx *fasthttp.RequestCtx) (*Ctx, error) {
 	ctx := &Ctx{
 		RequestCtx: requestCtx,
 	}
@@ -61,7 +61,7 @@ func (a *Api) NewCtx(requestCtx *fasthttp.RequestCtx) (*Ctx, error) {
 	return ctx, nil
 }
 
-func (a *Api) authorizeUser(ctx *fasthttp.RequestCtx) (*schema.User, error) {
+func (a *API) authorizeUser(ctx *fasthttp.RequestCtx) (*schema.User, error) {
 	code := parseFacebookCode(ctx)
 
 	if len(code) == 0 {
@@ -76,7 +76,7 @@ func (a *Api) authorizeUser(ctx *fasthttp.RequestCtx) (*schema.User, error) {
 	return a.users.QueryUserByFacebookUser(facebookUser)
 }
 
-func (a *Api) getSession(ctx *fasthttp.RequestCtx) (*schema.Session, error) {
+func (a *API) getSession(ctx *fasthttp.RequestCtx) (*schema.Session, error) {
 	sessionKey := string(ctx.Request.Header.Cookie(sessionCookieName))
 
 	s, err := a.sessions.Load(sessionKey)
@@ -101,7 +101,7 @@ func (a *Api) getSession(ctx *fasthttp.RequestCtx) (*schema.Session, error) {
 	return s, nil
 }
 
-func (a *Api) getUserFromCookie(ctx *fasthttp.RequestCtx) (*schema.User, error) {
+func (a *API) getUserFromCookie(ctx *fasthttp.RequestCtx) (*schema.User, error) {
 	token := ctx.Request.Header.Cookie(userTokenCookie)
 
 	userToken, err := a.userTokens.GetUserToken(string(token))
@@ -113,10 +113,10 @@ func (a *Api) getUserFromCookie(ctx *fasthttp.RequestCtx) (*schema.User, error) 
 		zap.Reflect("user token", userToken),
 		zap.ByteString("cookie", token),
 	)
-	return a.users.QueryUserById(userToken.UserID)
+	return a.users.QueryUserByID(userToken.UserID)
 }
 
-func (a *Api) deleteUserCookie(ctx *Ctx) error {
+func (a *API) deleteUserCookie(ctx *Ctx) error {
 	if !ctx.Authorized() {
 		return nil
 	}
@@ -130,7 +130,7 @@ func (a *Api) deleteUserCookie(ctx *Ctx) error {
 	return nil
 }
 
-func (a *Api) setUserCookie(ctx *fasthttp.RequestCtx, user *schema.User) error {
+func (a *API) setUserCookie(ctx *fasthttp.RequestCtx, user *schema.User) error {
 	userToken, err := a.userTokens.CreateUserToken(user)
 	if err != nil {
 		return err

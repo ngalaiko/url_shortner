@@ -21,7 +21,7 @@ type ICache interface {
 }
 
 // Cache is a cache service
-type Cache struct {
+type cache struct {
 	ctx    context.Context
 	logger logger.ILogger
 
@@ -30,8 +30,8 @@ type Cache struct {
 
 type operation func(map[string]interface{})
 
-func newCache(ctx context.Context) *Cache {
-	c := &Cache{
+func newCache(ctx context.Context) *cache {
+	c := &cache{
 		ctx:            ctx,
 		logger:         logger.FromContext(ctx),
 		operationsChan: make(chan operation),
@@ -42,7 +42,7 @@ func newCache(ctx context.Context) *Cache {
 }
 
 // Store stores value in cache
-func (c *Cache) Store(key string, value interface{}) {
+func (c *cache) Store(key string, value interface{}) {
 	start := time.Now()
 
 	c.store(key, value)
@@ -55,7 +55,7 @@ func (c *Cache) Store(key string, value interface{}) {
 }
 
 // Load return value from cache
-func (c *Cache) Load(key string) (interface{}, bool) {
+func (c *cache) Load(key string) (interface{}, bool) {
 	start := time.Now()
 
 	value, ok := c.load(key)
@@ -72,7 +72,7 @@ func (c *Cache) Load(key string) (interface{}, bool) {
 	return value, true
 }
 
-func (c *Cache) load(key string) (interface{}, bool) {
+func (c *cache) load(key string) (interface{}, bool) {
 	resultChan := make(chan interface{})
 	c.operationsChan <- func(cacheMap map[string]interface{}) {
 		resultChan <- cacheMap[key]
@@ -82,13 +82,13 @@ func (c *Cache) load(key string) (interface{}, bool) {
 	return result, !(result == nil)
 }
 
-func (c *Cache) store(key string, value interface{}) {
+func (c *cache) store(key string, value interface{}) {
 	c.operationsChan <- func(cacheMap map[string]interface{}) {
 		cacheMap[key] = value
 	}
 }
 
-func (c *Cache) background() {
+func (c *cache) background() {
 	cacheMap := map[string]interface{}{}
 
 	for {

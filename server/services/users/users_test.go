@@ -38,7 +38,7 @@ func (s *TestUsersSuite) Test_QueryUserById__should_return_user_by_id(c *C) {
 	user, err := s.createUser()
 	c.Assert(err, IsNil)
 
-	selected, err := s.service.QueryUserById(user.ID)
+	selected, err := s.service.QueryUserByID(user.ID)
 	if err != nil {
 		c.Fatal(err)
 	}

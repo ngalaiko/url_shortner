@@ -50,7 +50,7 @@ func (s *TestLinksSuite) Test_CreateLink__should_return_new_link_for_anon_user(c
 
 	link2, err := s.createLink(
 		withUserID(0),
-		withUrl(link1.URL),
+		withURL(link1.URL),
 	)
 	if err != nil {
 		c.Fatal(err)
@@ -60,18 +60,18 @@ func (s *TestLinksSuite) Test_CreateLink__should_return_new_link_for_anon_user(c
 }
 
 func (s *TestLinksSuite) Test_CreateLink__should_return_same_link_if_exists_for_not_anon_user(c *C) {
-	userId := uint64(1)
+	userID := uint64(1)
 
 	link1, err := s.createLink(
-		withUserID(userId),
+		withUserID(userID),
 	)
 	if err != nil {
 		c.Fatal(err)
 	}
 
 	link2, err := s.createLink(
-		withUrl(link1.URL),
-		withUserID(userId),
+		withURL(link1.URL),
+		withUserID(userID),
 	)
 	if err != nil {
 		c.Fatal(err)
@@ -209,7 +209,7 @@ func (s *TestLinksSuite) createUser() (*schema.User, error) {
 
 type optionFunc func(*schema.Link)
 
-func withUrl(url string) optionFunc {
+func withURL(url string) optionFunc {
 	return func(l *schema.Link) {
 		l.URL = url
 	}

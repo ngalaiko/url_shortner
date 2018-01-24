@@ -1,4 +1,4 @@
-package dao
+package db
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"gopkg.in/reform.v1"
 	"gopkg.in/reform.v1/dialects/postgresql"
 
+	// connector for postgreSQL
 	_ "github.com/lib/pq"
 
 	"github.com/ngalayko/url_shortner/server/cache"

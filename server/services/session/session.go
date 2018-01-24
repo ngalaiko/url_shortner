@@ -13,9 +13,11 @@ import (
 )
 
 var (
+	// ErrorNoSuchSession is an error for no such session
 	ErrorNoSuchSession = errors.New("no such session")
 )
 
+// ISession is an interface for session service
 type ISession interface {
 	Create() *schema.Session
 	Load(key string) (*schema.Session, error)

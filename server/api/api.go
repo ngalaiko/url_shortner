@@ -4,19 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	_ "net/http/pprof"
 	"time"
+
+	// activate pprof
+	_ "net/http/pprof"
 
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 
 	"github.com/ngalayko/url_shortner/server/config"
-	"github.com/ngalayko/url_shortner/server/dao"
+	"github.com/ngalayko/url_shortner/server/db"
 	"github.com/ngalayko/url_shortner/server/facebook"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/services/links"
 	"github.com/ngalayko/url_shortner/server/services/session"
-	"github.com/ngalayko/url_shortner/server/services/user_token"
+	"github.com/ngalayko/url_shortner/server/services/token"
 	"github.com/ngalayko/url_shortner/server/services/users"
 )
 
@@ -32,21 +34,21 @@ type response struct {
 	Err  string      `json:"err"`
 }
 
-// Api is a web service
-type Api struct {
+// API is a web service
+type API struct {
 	handler fasthttp.RequestHandler
 
 	config   config.WebConfig
 	fbConfig config.FacebookConfig
 
 	logger logger.ILogger
-	db     *dao.Db
+	db     *db.Db
 
-	facebookAPI *facebook.Api
+	facebookAPI *facebook.API
 
 	links      *links.Service
 	users      *users.Service
-	userTokens *user_token.Service
+	userTokens *token.Service
 	sessions   session.ISession
 }
 
@@ -56,37 +58,37 @@ func NewContext(ctx context.Context, web interface{}) context.Context {
 		ctx = context.Background()
 	}
 
-	if _, ok := web.(*Api); !ok {
-		web = newApi(ctx)
+	if _, ok := web.(*API); !ok {
+		web = newAPI(ctx)
 	}
 
 	return context.WithValue(ctx, ctxKey, web)
 }
 
 // FromContext return web from context
-func FromContext(ctx context.Context) *Api {
-	if web, ok := ctx.Value(ctxKey).(*Api); ok {
+func FromContext(ctx context.Context) *API {
+	if web, ok := ctx.Value(ctxKey).(*API); ok {
 		return web
 	}
 
-	return newApi(ctx)
+	return newAPI(ctx)
 }
 
-func newApi(ctx context.Context) *Api {
+func newAPI(ctx context.Context) *API {
 	cfg := config.FromContext(ctx)
 
-	w := &Api{
+	w := &API{
 		config:   cfg.Web,
 		fbConfig: cfg.Facebook,
 
 		logger: logger.FromContext(ctx),
-		db:     dao.FromContext(ctx),
+		db:     db.FromContext(ctx),
 
 		facebookAPI: facebook.FromContext(ctx),
 
 		links:      links.FromContext(ctx),
 		users:      users.FromContext(ctx),
-		userTokens: user_token.FromContext(ctx),
+		userTokens: token.FromContext(ctx),
 		sessions:   session.FromContext(ctx),
 	}
 
@@ -96,7 +98,7 @@ func newApi(ctx context.Context) *Api {
 }
 
 // Serve serve web with config credentials
-func (a *Api) Serve() {
+func (a *API) Serve() {
 	defer func() {
 		recover()
 	}()
@@ -123,7 +125,7 @@ func (a *Api) Serve() {
 	}
 }
 
-func (a *Api) initHandler(appCtx context.Context) {
+func (a *API) initHandler(appCtx context.Context) {
 	a.handler = func(requestCtx *fasthttp.RequestCtx) {
 		start := time.Now()
 
@@ -145,8 +147,8 @@ func (a *Api) initHandler(appCtx context.Context) {
 
 		}
 
-		if ctx.RedirectUrl != "" {
-			ctx.Redirect(ctx.RedirectUrl, http.StatusFound)
+		if ctx.RedirectURL != "" {
+			ctx.Redirect(ctx.RedirectURL, http.StatusFound)
 		}
 
 		a.logger.Info("handle request",
@@ -160,7 +162,7 @@ func (a *Api) initHandler(appCtx context.Context) {
 	}
 }
 
-func (a *Api) responseErr(ctx *Ctx, err error) {
+func (a *API) responseErr(ctx *Ctx, err error) {
 	ctx.Response.SetStatusCode(http.StatusBadRequest)
 	ctx.Response.Header.Set("Content-Type", "application/json")
 
@@ -175,7 +177,7 @@ func (a *Api) responseErr(ctx *Ctx, err error) {
 	a.responseBytes(ctx, data)
 }
 
-func (a *Api) responseData(ctx *Ctx, obj interface{}) {
+func (a *API) responseData(ctx *Ctx, obj interface{}) {
 	ctx.Response.SetStatusCode(http.StatusOK)
 	ctx.Response.Header.Set("Content-Type", "application/json")
 
@@ -190,22 +192,22 @@ func (a *Api) responseData(ctx *Ctx, obj interface{}) {
 	a.responseBytes(ctx, data)
 }
 
-func (a *Api) responseHtml(ctx *Ctx, data []byte) {
+func (a *API) responseHTML(ctx *Ctx, data []byte) {
 	ctx.Response.Header.Set("Content-Type", "text/html; charset=utf-8")
 
 	a.responseBytes(ctx, data)
 }
 
-func (a *Api) responseBytes(ctx *Ctx, data []byte) {
+func (a *API) responseBytes(ctx *Ctx, data []byte) {
 	ctx.Response.AppendBody(data)
 }
 
-func (a *Api) responseNotFound(ctx *Ctx) {
+func (a *API) responseNotFound(ctx *Ctx) {
 	data, err := a.renderNotFoundPage(ctx)
 	if err != nil {
 		a.responseErr(ctx, err)
 		return
 	}
 
-	a.responseHtml(ctx, data)
+	a.responseHTML(ctx, data)
 }

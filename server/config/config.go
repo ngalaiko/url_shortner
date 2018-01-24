@@ -51,17 +51,6 @@ func FromContext(ctx context.Context) *Config {
 	return newConfig(ctx)
 }
 
-func NewTestConfig() *Config {
-	return &Config{
-		Db: DbConfig{
-			Driver:       "postgres",
-			Connect:      "host=localhost user=url_short_test dbname=url_short_test sslmode=disable password=secret",
-			MaxIdleConns: 5,
-			MaxOpenConns: 5,
-		},
-	}
-}
-
 func newConfig(ctx context.Context) *Config {
 	l := logger.FromContext(ctx)
 

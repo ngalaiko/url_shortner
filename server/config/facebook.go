@@ -1,8 +1,9 @@
 package config
 
+// FacebookConfig holds config for facebook
 type FacebookConfig struct {
 	FacebookAppID     string `yaml:"FacebookAppID"`
 	FacebookAppSecret string `yaml:"FacebookAppSecret"`
-	FacebookApiSDK    string `yaml:"FacebookApiSDK"`
+	FacebookAPISDK    string `yaml:"FacebookApiSDK"`
 	FacebookLoginURL  string `yaml:"FacebookLoginURL"`
 }

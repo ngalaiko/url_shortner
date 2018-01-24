@@ -1,4 +1,4 @@
-package user_token
+package token
 
 import "context"
 

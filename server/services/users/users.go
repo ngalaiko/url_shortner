@@ -7,7 +7,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/ngalayko/url_shortner/server/dao"
+	"github.com/ngalayko/url_shortner/server/db"
 	"github.com/ngalayko/url_shortner/server/facebook"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/schema"
@@ -16,15 +16,15 @@ import (
 // Service is a users service
 type Service struct {
 	logger logger.ILogger
-	db     *dao.Db
+	db     *db.Db
 
-	facebookAPI *facebook.Api
+	facebookAPI *facebook.API
 }
 
 func newUsers(ctx context.Context) *Service {
 	u := &Service{
 		logger: logger.FromContext(ctx),
-		db:     dao.FromContext(ctx),
+		db:     db.FromContext(ctx),
 
 		facebookAPI: facebook.FromContext(ctx),
 	}
@@ -32,8 +32,8 @@ func newUsers(ctx context.Context) *Service {
 	return u
 }
 
-// QueryUserById returns user by id
-func (u *Service) QueryUserById(id uint64) (*schema.User, error) {
+// QueryUserByID returns user by id
+func (u *Service) QueryUserByID(id uint64) (*schema.User, error) {
 	user := &schema.User{}
 	if err := u.db.FindByPrimaryKeyTo(user, id); err != nil {
 		return nil, err

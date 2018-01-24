@@ -10,14 +10,14 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/ngalayko/url_shortner/server/dao"
+	"github.com/ngalayko/url_shortner/server/db"
 	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/schema"
 )
 
 const (
-	defaultShortUrlLen = 6
+	defaultShortURLLen = 6
 	httpScheme         = "http"
 )
 
@@ -25,7 +25,7 @@ const (
 type Service struct {
 	ctx    context.Context
 	logger logger.ILogger
-	db     *dao.Db
+	db     *db.Db
 
 	// channel of link ids to increment views of
 	viewsQueue chan uint64
@@ -38,7 +38,7 @@ func newLinks(ctx context.Context) *Service {
 	l := &Service{
 		ctx:    ctx,
 		logger: logger.FromContext(ctx),
-		db:     dao.FromContext(ctx),
+		db:     db.FromContext(ctx),
 
 		viewsQueue:    make(chan uint64),
 		transferQueue: make(chan *schema.Link),
@@ -86,13 +86,13 @@ func (l *Service) transferLink(link *schema.Link) error {
 	return nil
 }
 
-func (l *Service) incrementNextLink(linkId uint64) error {
+func (l *Service) incrementNextLink(linkID uint64) error {
 	link := &schema.Link{}
-	if err := l.db.FindByPrimaryKeyTo(link, linkId); err != nil {
+	if err := l.db.FindByPrimaryKeyTo(link, linkID); err != nil {
 		return err
 	}
 
-	link.Views += 1
+	link.Views++
 	if err := l.db.Update(link); err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func (l *Service) CreateLink(link *schema.Link) error {
 		return err
 	}
 
-	existed, err := l.queryLinkByURlAndUserID(link.URL, link.UserID)
+	existed, err := l.queryLinkByURLAndUserID(link.URL, link.UserID)
 	switch {
 	case err == sql.ErrNoRows:
 
@@ -169,15 +169,15 @@ func prepareLink(link *schema.Link) error {
 	now := time.Now()
 	link.URL = uri.String()
 	link.CreatedAt = now
-	link.ShortURL = helpers.RandomString(defaultShortUrlLen)
+	link.ShortURL = helpers.RandomString(defaultShortURLLen)
 
 	return nil
 }
 
-// QueryLinkByShortUrl returns link by short url
-func (l *Service) QueryLinkByShortUrl(shortUrl string) (*schema.Link, error) {
+// QueryLinkByShortURL returns link by short url
+func (l *Service) QueryLinkByShortURL(shortURL string) (*schema.Link, error) {
 	link := &schema.Link{}
-	if err := l.db.FindOneTo(link, "short_url", shortUrl); err != nil {
+	if err := l.db.FindOneTo(link, "short_url", shortURL); err != nil {
 		return nil, err
 	}
 
@@ -193,8 +193,7 @@ func (l *Service) QueryLinkByShortUrl(shortUrl string) (*schema.Link, error) {
 	return link, nil
 }
 
-// QueryLinkByURlAndUserID returns link by userID and url
-func (l *Service) queryLinkByURlAndUserID(url string, userID uint64) (*schema.Link, error) {
+func (l *Service) queryLinkByURLAndUserID(url string, userID uint64) (*schema.Link, error) {
 	link := &schema.Link{}
 	tail := fmt.Sprintf(`
 		WHERE
@@ -217,7 +216,7 @@ func (l *Service) queryLinkByURlAndUserID(url string, userID uint64) (*schema.Li
 	return link, nil
 }
 
-// QueryLinkByShortUrl returns link by short url
+// QueryLinksByUser returns link by short url
 func (l *Service) QueryLinksByUser(userID uint64) ([]*schema.Link, error) {
 	rows, err := l.db.FindRows(schema.LinkTable, "user_id", userID)
 	if err != nil {

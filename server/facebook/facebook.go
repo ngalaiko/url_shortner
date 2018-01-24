@@ -22,28 +22,29 @@ const (
 	apiLastName  = "last_name"
 )
 
-// Api is a facebook api wrapper
-type Api struct {
+// API is a facebook api wrapper
+type API struct {
 	logger logger.ILogger
 	config config.FacebookConfig
 
 	app *facebook.App
 }
 
+// User is a struct for facebook user
 type User struct {
-	ID        string
-	FirstName string
-	LastName  string
+	ID        string `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
 }
 
-func newApi(ctx context.Context) *Api {
+func newAPI(ctx context.Context) *API {
 
 	cfg := config.FromContext(ctx).Facebook
 
 	app := facebook.New(cfg.FacebookAppID, cfg.FacebookAppSecret)
 	app.RedirectUri = cfg.FacebookLoginURL
 
-	return &Api{
+	return &API{
 		logger: logger.FromContext(ctx),
 		config: cfg,
 
@@ -52,7 +53,7 @@ func newApi(ctx context.Context) *Api {
 }
 
 // GetUserByRequest returns user by facebook token from facebook graph api
-func (a *Api) GetUserByRequest(facebookCode string) (*User, error) {
+func (a *API) GetUserByRequest(facebookCode string) (*User, error) {
 
 	token, err := a.app.ParseCode(facebookCode)
 	if err != nil {

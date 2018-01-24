@@ -8,13 +8,13 @@ import (
 	"github.com/ngalayko/url_shortner/server/api"
 	"github.com/ngalayko/url_shortner/server/cache"
 	"github.com/ngalayko/url_shortner/server/config"
-	"github.com/ngalayko/url_shortner/server/dao"
-	"github.com/ngalayko/url_shortner/server/dao/migrate"
+	"github.com/ngalayko/url_shortner/server/db"
+	"github.com/ngalayko/url_shortner/server/db/migrate"
 	"github.com/ngalayko/url_shortner/server/facebook"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/services/links"
 	"github.com/ngalayko/url_shortner/server/services/session"
-	"github.com/ngalayko/url_shortner/server/services/user_token"
+	"github.com/ngalayko/url_shortner/server/services/token"
 	"github.com/ngalayko/url_shortner/server/services/users"
 )
 
@@ -33,11 +33,11 @@ var (
 		logger.NewContext,
 		config.NewContext,
 		cache.NewContext,
-		dao.NewContext,
+		db.NewContext,
 		migrate.NewContext,
 		links.NewContext,
 		users.NewContext,
-		user_token.NewContext,
+		token.NewContext,
 		api.NewContext,
 		facebook.NewContext,
 		session.NewContext,

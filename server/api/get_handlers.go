@@ -12,25 +12,25 @@ const (
 	facebookAccessCodeURLParam = "code"
 )
 
-func (a *Api) getHandlers(appCtx context.Context, ctx *Ctx) {
+func (a *API) getHandlers(appCtx context.Context, ctx *Ctx) {
 
-	requestUrl := string(ctx.RequestURI())
+	requestURL := string(ctx.RequestURI())
 	switch {
-	case requestUrl == "/":
+	case requestURL == "/":
 		data, err := a.renderMainPage(ctx)
 		if err != nil {
 			ctx.AddError(err)
 		}
 
-		a.responseHtml(ctx, data)
+		a.responseHTML(ctx, data)
 
-	case requestUrl == "/logout":
+	case requestURL == "/logout":
 		if err := a.deleteUserCookie(ctx); err != nil {
 			a.responseErr(ctx, err)
 			return
 		}
 
-	case strings.HasPrefix(requestUrl, facebookLoginRequestURI):
+	case strings.HasPrefix(requestURL, facebookLoginRequestURI):
 		user, err := a.authorizeUser(ctx.RequestCtx)
 		if err != nil {
 			a.responseErr(ctx, err)
@@ -50,11 +50,11 @@ func (a *Api) getHandlers(appCtx context.Context, ctx *Ctx) {
 	}
 }
 
-func (a *Api) redirectHome(ctx *Ctx) {
-	ctx.RedirectUrl = "https://" + string(ctx.URI().Host())
+func (a *API) redirectHome(ctx *Ctx) {
+	ctx.RedirectURL = "https://" + string(ctx.URI().Host())
 }
 
-func (a *Api) renderNotFoundPage(ctx *Ctx) ([]byte, error) {
+func (a *API) renderNotFoundPage(ctx *Ctx) ([]byte, error) {
 	data, err := template.NotFound(
 		template.WithFacebookConfig(a.fbConfig),
 		template.WithUser(ctx.User),
@@ -68,7 +68,7 @@ func (a *Api) renderNotFoundPage(ctx *Ctx) ([]byte, error) {
 	return data, err
 }
 
-func (a *Api) renderMainPage(ctx *Ctx) ([]byte, error) {
+func (a *API) renderMainPage(ctx *Ctx) ([]byte, error) {
 	data, err := template.Index(
 		template.WithFacebookConfig(a.fbConfig),
 		template.WithUser(ctx.User),
@@ -82,15 +82,15 @@ func (a *Api) renderMainPage(ctx *Ctx) ([]byte, error) {
 	return data, err
 }
 
-func (a *Api) redirectLink(ctx *Ctx) {
-	shortUrl := string(ctx.RequestURI())[1:]
+func (a *API) redirectLink(ctx *Ctx) {
+	shortURL := string(ctx.RequestURI())[1:]
 
-	if len(shortUrl) == 0 {
+	if len(shortURL) == 0 {
 		a.responseNotFound(ctx)
 		return
 	}
 
-	link, err := a.links.QueryLinkByShortUrl(shortUrl)
+	link, err := a.links.QueryLinkByShortURL(shortURL)
 	switch {
 	case err == sql.ErrNoRows:
 		a.responseNotFound(ctx)
@@ -102,5 +102,5 @@ func (a *Api) redirectLink(ctx *Ctx) {
 
 	}
 
-	ctx.RedirectUrl = link.URL
+	ctx.RedirectURL = link.URL
 }

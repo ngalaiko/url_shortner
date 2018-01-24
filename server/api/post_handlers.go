@@ -7,7 +7,7 @@ import (
 	"github.com/ngalayko/url_shortner/server/schema"
 )
 
-func (a *Api) postHandlers(appCtx context.Context, requestCtx *Ctx) {
+func (a *API) postHandlers(appCtx context.Context, requestCtx *Ctx) {
 
 	switch string(requestCtx.RequestURI()) {
 	case "/link":
@@ -19,7 +19,7 @@ func (a *Api) postHandlers(appCtx context.Context, requestCtx *Ctx) {
 	}
 }
 
-func (a *Api) createLink(ctx *Ctx) {
+func (a *API) createLink(ctx *Ctx) {
 	link := &schema.Link{}
 	if err := json.Unmarshal(ctx.PostBody(), link); err != nil {
 		a.responseErr(ctx, err)

@@ -18,17 +18,17 @@ func NewContext(ctx context.Context, facebook interface{}) context.Context {
 	}
 
 	if facebook == nil {
-		facebook = newApi(ctx)
+		facebook = newAPI(ctx)
 	}
 
 	return context.WithValue(ctx, apiCtxKey, facebook)
 }
 
 // FromContext returns facebook api from context
-func FromContext(ctx context.Context) *Api {
-	if api, ok := ctx.Value(apiCtxKey).(*Api); ok {
+func FromContext(ctx context.Context) *API {
+	if api, ok := ctx.Value(apiCtxKey).(*API); ok {
 		return api
 	}
 
-	return newApi(ctx)
+	return newAPI(ctx)
 }

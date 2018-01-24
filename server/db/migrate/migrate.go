@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap"
 	reform "gopkg.in/reform.v1"
 
-	"github.com/ngalayko/url_shortner/server/dao"
+	"github.com/ngalayko/url_shortner/server/db"
 	"github.com/ngalayko/url_shortner/server/logger"
 )
 
@@ -18,7 +18,7 @@ type migrationsCtxKey string
 
 // Migrate is a service to apply db migrations
 type Migrate struct {
-	Db *dao.Db
+	Db *db.Db
 
 	logger logger.ILogger
 }
@@ -47,7 +47,7 @@ func FromContext(ctx context.Context) *Migrate {
 
 func newMigrate(ctx context.Context) *Migrate {
 	return &Migrate{
-		Db:     dao.FromContext(ctx),
+		Db:     db.FromContext(ctx),
 		logger: logger.FromContext(ctx),
 	}
 }
@@ -85,7 +85,7 @@ func (m *Migrate) Apply() error {
 	return nil
 }
 
-// FLush flushes migrations
+// Flush flushes migrations
 func (m *Migrate) Flush() error {
 	migrations := append(initMigrations(), migrations()...)
 	for i := len(migrations) - 1; i >= 0; i-- {

@@ -1,4 +1,4 @@
-package user_token
+package token
 
 import (
 	"context"
@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ngalayko/url_shortner/server/dao"
+	"go.uber.org/zap"
+
+	"github.com/ngalayko/url_shortner/server/db"
 	"github.com/ngalayko/url_shortner/server/helpers"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/schema"
-	"go.uber.org/zap"
 )
 
 const (
@@ -21,13 +22,13 @@ const (
 // Service is a user token service
 type Service struct {
 	logger logger.ILogger
-	db     *dao.Db
+	db     *db.Db
 }
 
 func newTokens(ctx context.Context) *Service {
 	return &Service{
 		logger: logger.FromContext(ctx),
-		db:     dao.FromContext(ctx),
+		db:     db.FromContext(ctx),
 	}
 }
 
@@ -66,7 +67,7 @@ func (t *Service) CreateUserToken(user *schema.User) (*schema.UserToken, error) 
 	return token, nil
 }
 
-// DeleteUserToken
+// DeleteUserToken deletes user token
 func (t *Service) DeleteUserToken(userID uint64, token string) error {
 	userToken := &schema.UserToken{}
 	tail := fmt.Sprintf(`

@@ -16,7 +16,7 @@ type Ctx struct {
 	Links   []*schema.Link
 	Session *schema.Session
 
-	RedirectUrl string
+	RedirectURL string
 }
 
 // Authorized true if request from authorized user

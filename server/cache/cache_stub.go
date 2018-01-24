@@ -1,14 +1,15 @@
 package cache
 
-type Stub struct{}
+// stub us stub cache
+type stub struct{}
 
 // NewStubCache returns stub cache
-func NewStubCache() *Stub {
-	return &Stub{}
+func NewStubCache() *stub {
+	return &stub{}
 }
 
 // Store does nothing
-func (cs *Stub) Store(key string, value interface{}) {}
+func (cs *stub) Store(key string, value interface{}) {}
 
 // Load returns nothing
-func (cs *Stub) Load(key string) (interface{}, bool) { return nil, false }
+func (cs *stub) Load(key string) (interface{}, bool) { return nil, false }
