@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	"golang.org/x/sync/syncmap"
-
 	"github.com/ngalayko/url_shortner/server/logger"
 	"go.uber.org/zap"
 )
@@ -24,49 +22,34 @@ type ICache interface {
 
 // Cache is a cache service
 type Cache struct {
+	ctx    context.Context
 	logger logger.ILogger
 
-	cacheMap *syncmap.Map
+	operationsChan chan operation
 }
 
-// NewContext stores cache in context
-func NewContext(ctx context.Context, cache interface{}) context.Context {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
-	if _, ok := cache.(ICache); !ok {
-		cache = newCache(ctx)
-	}
-
-	return context.WithValue(ctx, ctxKey, cache)
-}
-
-// FromContext returns cache from context
-func FromContext(ctx context.Context) ICache {
-	if cache, ok := ctx.Value(ctxKey).(ICache); ok {
-		return cache
-	}
-
-	return newCache(ctx)
-}
+type operation func(map[string]interface{})
 
 func newCache(ctx context.Context) *Cache {
-	return &Cache{
-		logger:   logger.FromContext(ctx),
-		cacheMap: &syncmap.Map{},
+	c := &Cache{
+		ctx:            ctx,
+		logger:         logger.FromContext(ctx),
+		operationsChan: make(chan operation),
 	}
+	go c.background()
+
+	return c
 }
 
 // Store stores value in cache
 func (c *Cache) Store(key string, value interface{}) {
 	start := time.Now()
 
-	if _, ok := c.cacheMap.Load(key); ok {
+	if _, ok := c.load(key); ok {
 		return
 	}
 
-	c.cacheMap.Store(key, value)
+	c.store(key, value)
 
 	c.logger.Debug("store value in cache",
 		zap.String("key", key),
@@ -79,7 +62,7 @@ func (c *Cache) Store(key string, value interface{}) {
 func (c *Cache) Load(key string) (interface{}, bool) {
 	start := time.Now()
 
-	value, ok := c.cacheMap.Load(key)
+	value, ok := c.load(key)
 	if !ok {
 		return nil, false
 	}
@@ -91,4 +74,34 @@ func (c *Cache) Load(key string) (interface{}, bool) {
 	)
 
 	return value, true
+}
+
+func (c *Cache) load(key string) (interface{}, bool) {
+	resultChan := make(chan interface{})
+	c.operationsChan <- func(cacheMap map[string]interface{}) {
+		resultChan <- cacheMap[key]
+	}
+
+	result := <-resultChan
+	return result, !(result == nil)
+}
+
+func (c *Cache) store(key string, value interface{}) {
+	c.operationsChan <- func(cacheMap map[string]interface{}) {
+		cacheMap[key] = value
+	}
+}
+
+func (c *Cache) background() {
+	cacheMap := map[string]interface{}{}
+
+	for {
+		select {
+		case operation := <-c.operationsChan:
+			operation(cacheMap)
+
+		case <-c.ctx.Done():
+			return
+		}
+	}
 }
