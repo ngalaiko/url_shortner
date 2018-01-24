@@ -44,6 +44,10 @@ func (a *Api) NewCtx(requestCtx *fasthttp.RequestCtx) (*Ctx, error) {
 			ctx.AddError(err)
 		}
 
+		if len(ctx.Session.LinkIDs) == 0 {
+			return ctx, nil
+		}
+
 		if err := a.links.TransferLinks(user.ID, ctx.Session.LinkIDs...); err != nil {
 			return ctx, err
 		}
@@ -52,8 +56,6 @@ func (a *Api) NewCtx(requestCtx *fasthttp.RequestCtx) (*Ctx, error) {
 		if err := a.sessions.Update(ctx.Session); err != nil {
 			return ctx, err
 		}
-
-		return ctx, nil
 	}
 
 	return ctx, nil
