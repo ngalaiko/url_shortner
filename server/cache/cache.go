@@ -45,10 +45,6 @@ func newCache(ctx context.Context) *Cache {
 func (c *Cache) Store(key string, value interface{}) {
 	start := time.Now()
 
-	if _, ok := c.load(key); ok {
-		return
-	}
-
 	c.store(key, value)
 
 	c.logger.Debug("store value in cache",

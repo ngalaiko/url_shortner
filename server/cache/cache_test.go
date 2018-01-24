@@ -42,3 +42,14 @@ func (s *TestCacheSuite) Test_Load(c *C) {
 	c.Assert(ok, Equals, true)
 	c.Assert(v, Equals, value)
 }
+
+func (s *TestCacheSuite) Test_Store__should_update_value_in_cache(c *C) {
+	key, value, value2 := "key", "value", "value2"
+
+	s.cache.Store(key, value)
+	s.cache.Store(key, value2)
+
+	v, ok := s.cache.Load(key)
+	c.Assert(ok, Equals, true)
+	c.Assert(v, Equals, value2)
+}
