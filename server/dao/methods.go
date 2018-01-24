@@ -43,6 +43,12 @@ func (t *Db) FindByPrimaryKeyTo(record reform.Record, pk interface{}) error {
 
 // FindOneTo finds first record by column value
 func (t *Db) FindOneTo(str reform.Struct, column string, arg interface{}) error {
+	if fromCache, ok := t.cache.Load(cacheKeyStringInterface(column, arg)); ok {
+		cacheValue := reflect.ValueOf(fromCache).Elem()
+		recordValue := reflect.ValueOf(str).Elem()
+		recordValue.Set(cacheValue)
+		return nil
+	}
 	return t.db.FindOneTo(str, column, arg)
 }
 
@@ -76,12 +82,21 @@ func (t *Db) NextRow(str reform.Struct, rows *sql.Rows) error {
 	return t.db.NextRow(str, rows)
 }
 
+// InTransaction wraps function with begin : commit ? rollback
 func (t *Db) InTransaction(f func(*reform.TX) error) error {
 	return t.db.InTransaction(f)
 }
 
+//
+// helpers
+//
+
+func cacheKeyStringInterface(name string, val interface{}) string {
+	return fmt.Sprintf("%s%v", name, val)
+}
+
 func cacheKeyWithValue(record reform.Record, pk interface{}) string {
-	return fmt.Sprintf("%s%v", record.View().Name(), pk)
+	return cacheKeyStringInterface(record.View().Name(), pk)
 }
 
 func cacheKey(record reform.Record) string {
