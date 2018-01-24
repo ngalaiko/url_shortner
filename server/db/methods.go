@@ -43,20 +43,14 @@ func (t *Db) FindByPrimaryKeyTo(record reform.Record, pk interface{}) error {
 
 // FindOneTo finds first record by column value
 func (t *Db) FindOneTo(str reform.Struct, column string, arg interface{}) error {
-	if fromCache, ok := t.cache.Load(cacheKeyStringInterface(column, arg)); ok {
-		cacheValue := reflect.ValueOf(fromCache).Elem()
-		recordValue := reflect.ValueOf(str).Elem()
-		recordValue.Set(cacheValue)
-		return nil
-	}
 	return t.db.FindOneTo(str, column, arg)
 }
 
-// FindAllFrom returns all records from db By field
-func (t *Db) FindAllFrom(view reform.View, column string, args ...interface{}) ([]reform.Struct, error) {
+// FindAllFromByPk returns all records from db By field
+func (t *Db) FindAllFromByPk(view reform.View, pkColumn string, pks ...interface{}) ([]reform.Struct, error) {
 	fromCache := make([]reform.Struct, 0, 0)
-	for _, arg := range args {
-		found, ok := t.cache.Load(cacheKeyStringInterface(column, arg))
+	for _, pk := range pks {
+		found, ok := t.cache.Load(cacheKeyStringInterface(pkColumn, pk))
 		if !ok {
 			continue
 		}
@@ -65,11 +59,11 @@ func (t *Db) FindAllFrom(view reform.View, column string, args ...interface{}) (
 			fromCache = append(fromCache, foundStruct)
 		}
 	}
-	if len(fromCache) == len(args) {
+	if len(fromCache) == len(pks) {
 		return fromCache, nil
 	}
 
-	fromDb, err := t.db.FindAllFrom(view, column, args...)
+	fromDb, err := t.db.FindAllFrom(view, pkColumn, pks...)
 	if err != nil {
 		return nil, err
 	}

@@ -116,7 +116,7 @@ func (l *Service) TransferLinks(userID uint64, linkIDs ...uint64) error {
 		args[i] = linkIDs[i]
 	}
 
-	links, err := l.db.FindAllFrom(schema.LinkTable, "id", args...)
+	links, err := l.db.FindAllFromByPk(schema.LinkTable, "id", args...)
 	if err != nil {
 		return err
 	}
