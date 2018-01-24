@@ -37,8 +37,6 @@ func (a *Api) NewCtx(requestCtx *fasthttp.RequestCtx) (*Ctx, error) {
 		if err != nil {
 			ctx.AddError(err)
 		}
-
-		return ctx, nil
 	}
 
 	ctx.Session, err = a.getSession(requestCtx)
