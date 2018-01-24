@@ -13,19 +13,13 @@ import (
 const (
 	facebookLoginRequestURI = "/login/facebook"
 	userTokenCookie         = "token"
-	sessionCookie           = "session"
+	sessionCookieName       = "session"
 )
 
 // NewCtx from request ctx
 func (a *Api) NewCtx(requestCtx *fasthttp.RequestCtx) (*Ctx, error) {
 	ctx := &Ctx{
 		RequestCtx: requestCtx,
-	}
-
-	var err error
-	ctx.Session, err = a.getSession(requestCtx)
-	if err != nil {
-		return nil, err
 	}
 
 	user, err := a.getUserFromCookie(requestCtx)
@@ -35,12 +29,21 @@ func (a *Api) NewCtx(requestCtx *fasthttp.RequestCtx) (*Ctx, error) {
 		return ctx, err
 
 	default:
+		ctx.Response.Header.DelCookie(sessionCookieName)
+
 		ctx.User = user
 
 		ctx.Links, err = a.links.QueryLinksByUser(user.ID)
 		if err != nil {
 			ctx.AddError(err)
 		}
+
+		return ctx, nil
+	}
+
+	ctx.Session, err = a.getSession(requestCtx)
+	if err != nil {
+		return nil, err
 	}
 
 	return ctx, nil
@@ -62,7 +65,7 @@ func (a *Api) authorizeUser(ctx *fasthttp.RequestCtx) (*schema.User, error) {
 }
 
 func (a *Api) getSession(ctx *fasthttp.RequestCtx) (*schema.Session, error) {
-	sessionKey := string(ctx.Request.Header.Cookie(sessionCookie))
+	sessionKey := string(ctx.Request.Header.Cookie(sessionCookieName))
 
 	s, err := a.sessions.Load(sessionKey)
 	switch {
@@ -73,12 +76,20 @@ func (a *Api) getSession(ctx *fasthttp.RequestCtx) (*schema.Session, error) {
 		return nil, err
 	}
 
+	sessionCookie := fasthttp.AcquireCookie()
+	sessionCookie.SetKey(sessionCookieName)
+	sessionCookie.SetValue(sessionKey)
+	sessionCookie.SetDomainBytes(ctx.URI().Host())
+	sessionCookie.SetSecure(true)
+	sessionCookie.SetHTTPOnly(true)
+	ctx.Response.Header.SetCookie(sessionCookie)
+	fasthttp.ReleaseCookie(sessionCookie)
+
 	return s, nil
 }
 
 func (a *Api) getUserFromCookie(ctx *fasthttp.RequestCtx) (*schema.User, error) {
 	token := ctx.Request.Header.Cookie(userTokenCookie)
-	ctx.Response.Header.DelCookie(sessionCookie)
 
 	userToken, err := a.userTokens.GetUserToken(string(token))
 	if err != nil {
@@ -118,7 +129,6 @@ func (a *Api) setUserCookie(ctx *fasthttp.RequestCtx, user *schema.User) error {
 	tokenCookie.SetExpire(userToken.ExpiredAt)
 	tokenCookie.SetDomainBytes(ctx.URI().Host())
 	tokenCookie.SetSecure(true)
-	tokenCookie.SetPath("/")
 	tokenCookie.SetHTTPOnly(true)
 	ctx.Response.Header.SetCookie(tokenCookie)
 	fasthttp.ReleaseCookie(tokenCookie)
