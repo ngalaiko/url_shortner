@@ -10,7 +10,6 @@ import (
 
 const (
 	facebookAccessCodeURLParam = "code"
-	userTokenCookie            = "token"
 )
 
 func (a *Api) getHandlers(appCtx context.Context, ctx *Ctx) {

@@ -12,8 +12,9 @@ type Ctx struct {
 
 	Errors []error
 
-	User  *schema.User
-	Links []*schema.Link
+	User    *schema.User
+	Links   []*schema.Link
+	Session *schema.Session
 
 	RedirectUrl string
 }

@@ -148,6 +148,25 @@ func (s *TestLinksSuite) Test_QueryLinksByUser__should_not_query_deleted_links(c
 	c.Assert(1, Equals, len(links))
 }
 
+func (s *TestLinksSuite) Test_TransferLinks__should_change_links_owner(c *C) {
+	user, err := s.createUser()
+	c.Assert(err, IsNil)
+
+	link, err := s.createLink()
+	c.Assert(err, IsNil)
+
+	if err := s.service.TransferLinks(user.ID, link); err != nil {
+		c.Fatal(err)
+	}
+
+	links, err := s.service.QueryLinksByUser(user.ID)
+	c.Assert(err, IsNil)
+
+	for _, link := range links {
+		c.Assert(link.UserID, Equals, user.ID)
+	}
+}
+
 // helpers
 
 func (s *TestLinksSuite) createLink(opts ...optionFunc) (*schema.Link, error) {

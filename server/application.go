@@ -13,6 +13,7 @@ import (
 	"github.com/ngalayko/url_shortner/server/facebook"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/services/links"
+	"github.com/ngalayko/url_shortner/server/services/session"
 	"github.com/ngalayko/url_shortner/server/services/user_token"
 	"github.com/ngalayko/url_shortner/server/services/users"
 )
@@ -39,6 +40,7 @@ var (
 		user_token.NewContext,
 		api.NewContext,
 		facebook.NewContext,
+		session.NewContext,
 	}
 )
 

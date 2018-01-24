@@ -7,10 +7,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/ngalayko/url_shortner/server/schema"
+	"github.com/ngalayko/url_shortner/server/services/session"
 )
 
 const (
 	facebookLoginRequestURI = "/login/facebook"
+	userTokenCookie         = "token"
+	sessionCookie           = "session"
 )
 
 // NewCtx from request ctx
@@ -19,18 +22,19 @@ func (a *Api) NewCtx(requestCtx *fasthttp.RequestCtx) (*Ctx, error) {
 		RequestCtx: requestCtx,
 	}
 
+	var err error
+	ctx.Session, err = a.getSession(requestCtx)
+	if err != nil {
+		return nil, err
+	}
+
 	user, err := a.getUserFromCookie(requestCtx)
 	switch {
 	case err == sql.ErrNoRows:
-
 	case err != nil:
 		return ctx, err
 
 	default:
-		a.logger.Info("query user from cookie",
-			zap.Reflect("user", user),
-		)
-
 		ctx.User = user
 
 		ctx.Links, err = a.links.QueryLinksByUser(user.ID)
@@ -57,8 +61,24 @@ func (a *Api) authorizeUser(ctx *fasthttp.RequestCtx) (*schema.User, error) {
 	return a.users.QueryUserByFacebookUser(facebookUser)
 }
 
+func (a *Api) getSession(ctx *fasthttp.RequestCtx) (*schema.Session, error) {
+	sessionKey := string(ctx.Request.Header.Cookie(sessionCookie))
+
+	s, err := a.sessions.Load(sessionKey)
+	switch {
+	case err == session.ErrorNoSuchSession:
+		s = a.sessions.Create()
+
+	case err != nil:
+		return nil, err
+	}
+
+	return s, nil
+}
+
 func (a *Api) getUserFromCookie(ctx *fasthttp.RequestCtx) (*schema.User, error) {
 	token := ctx.Request.Header.Cookie(userTokenCookie)
+	ctx.Response.Header.DelCookie(sessionCookie)
 
 	userToken, err := a.userTokens.GetUserToken(string(token))
 	if err != nil {

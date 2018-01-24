@@ -23,19 +23,25 @@ const (
 
 // Service is a links service
 type Service struct {
+	ctx    context.Context
 	logger logger.ILogger
 	db     *dao.Db
 
-	//channel of link ids to increment views of
+	// channel of link ids to increment views of
 	viewsQueue chan uint64
+
+	// channel of links with updated user_id
+	transferQueue chan *schema.Link
 }
 
 func newLinks(ctx context.Context) *Service {
 	l := &Service{
+		ctx:    ctx,
 		logger: logger.FromContext(ctx),
 		db:     dao.FromContext(ctx),
 
-		viewsQueue: make(chan uint64),
+		viewsQueue:    make(chan uint64),
+		transferQueue: make(chan *schema.Link),
 	}
 
 	go l.loop()
@@ -44,13 +50,40 @@ func newLinks(ctx context.Context) *Service {
 }
 
 func (l *Service) loop() {
-	for id := range l.viewsQueue {
-		if err := l.incrementNextLink(id); err != nil {
-			l.logger.Error("error incrementing link",
-				zap.Error(err),
-			)
+	for {
+		select {
+		case id := <-l.viewsQueue:
+			if err := l.incrementNextLink(id); err != nil {
+				l.logger.Error("error incrementing link",
+					zap.Error(err),
+				)
+			}
+
+		case link := <-l.transferQueue:
+			if err := l.transferLink(link); err != nil {
+				l.logger.Error("error while transfering link",
+					zap.Error(err),
+					zap.Reflect("link", link),
+				)
+			}
+
+		case <-l.ctx.Done():
+			return
+
 		}
 	}
+}
+
+func (l *Service) transferLink(link *schema.Link) error {
+	if err := l.db.Update(link); err != nil {
+		return err
+	}
+
+	l.logger.Info("link transfered",
+		zap.Uint64("link id", link.ID),
+		zap.Uint64("new user id", link.UserID),
+	)
+	return nil
 }
 
 func (l *Service) incrementNextLink(linkId uint64) error {
@@ -68,6 +101,20 @@ func (l *Service) incrementNextLink(linkId uint64) error {
 		zap.Uint64("id", link.ID),
 		zap.Uint64("views", link.Views),
 	)
+
+	return nil
+}
+
+// TransferLinks transfer links from anon user to new user
+func (l *Service) TransferLinks(userID uint64, links ...*schema.Link) error {
+	if len(links) == 0 {
+		return nil
+	}
+
+	for _, link := range links {
+		link.UserID = userID
+		l.transferQueue <- link
+	}
 
 	return nil
 }

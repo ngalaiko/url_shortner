@@ -35,5 +35,13 @@ func (a *Api) createLink(ctx *Ctx) {
 		return
 	}
 
+	if !ctx.Authorized() {
+		ctx.Session.LinkIDs = append(ctx.Session.LinkIDs, link.ID)
+		if err := a.sessions.Update(ctx.Session); err != nil {
+			a.responseErr(ctx, err)
+			return
+		}
+	}
+
 	a.responseData(ctx, link)
 }

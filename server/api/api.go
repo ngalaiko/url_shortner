@@ -15,6 +15,7 @@ import (
 	"github.com/ngalayko/url_shortner/server/facebook"
 	"github.com/ngalayko/url_shortner/server/logger"
 	"github.com/ngalayko/url_shortner/server/services/links"
+	"github.com/ngalayko/url_shortner/server/services/session"
 	"github.com/ngalayko/url_shortner/server/services/user_token"
 	"github.com/ngalayko/url_shortner/server/services/users"
 )
@@ -46,6 +47,7 @@ type Api struct {
 	links      *links.Service
 	users      *users.Service
 	userTokens *user_token.Service
+	sessions   session.ISession
 }
 
 // NewContext stores web in context
@@ -85,6 +87,7 @@ func newApi(ctx context.Context) *Api {
 		links:      links.FromContext(ctx),
 		users:      users.FromContext(ctx),
 		userTokens: user_token.FromContext(ctx),
+		sessions:   session.FromContext(ctx),
 	}
 
 	w.initHandler(ctx)
@@ -152,6 +155,7 @@ func (a *Api) initHandler(appCtx context.Context) {
 			zap.ByteString("body", ctx.PostBody()),
 			zap.Reflect("user", ctx.User),
 			zap.Duration("duration", time.Since(start)),
+			zap.Reflect("session", ctx.Session),
 		)
 	}
 }
