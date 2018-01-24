@@ -22,6 +22,12 @@ func (a *Api) NewCtx(requestCtx *fasthttp.RequestCtx) (*Ctx, error) {
 		RequestCtx: requestCtx,
 	}
 
+	var err error
+	ctx.Session, err = a.getSession(requestCtx)
+	if err != nil {
+		return ctx, err
+	}
+
 	user, err := a.getUserFromCookie(requestCtx)
 	switch {
 	case err == sql.ErrNoRows:
@@ -48,11 +54,6 @@ func (a *Api) NewCtx(requestCtx *fasthttp.RequestCtx) (*Ctx, error) {
 		}
 
 		return ctx, nil
-	}
-
-	ctx.Session, err = a.getSession(requestCtx)
-	if err != nil {
-		return ctx, err
 	}
 
 	return ctx, nil
