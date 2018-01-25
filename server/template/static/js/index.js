@@ -14,7 +14,7 @@ function getShortUrl() {
 }
 function showShortUrl(data) {
     if (!data.ok) {
-        alert(data);
+        alert(data.err);
         return;
     }
 
