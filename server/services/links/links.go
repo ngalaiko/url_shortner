@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
@@ -224,8 +225,7 @@ func (l *Service) QueryLinksByUser(userID uint64) ([]*schema.Link, error) {
 	}
 	defer rows.Close()
 
-	// todo: make big slice
-	links := []*schema.Link{}
+	links := make([]*schema.Link, 0, 50)
 	for {
 		link := &schema.Link{}
 		if err := l.db.NextRow(link, rows); err != nil {
@@ -237,6 +237,9 @@ func (l *Service) QueryLinksByUser(userID uint64) ([]*schema.Link, error) {
 
 		links = append(links, link)
 	}
+	sort.Slice(links, func(i, j int) bool {
+		return links[i].CreatedAt.After(links[j].CreatedAt)
+	})
 
 	return links, nil
 }
